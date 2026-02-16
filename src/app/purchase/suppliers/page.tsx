@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import {
@@ -96,9 +97,11 @@ export default function PurchaseSuppliersPage() {
                       {formatCurrency(supplier.dueAmount)}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
+                        <Link href={`/purchase/suppliers/${supplier.partyId}`}>
+                            <Button variant="outline" size="sm">
+                                View
+                            </Button>
+                        </Link>
                     </TableCell>
                   </TableRow>
                 ))}
