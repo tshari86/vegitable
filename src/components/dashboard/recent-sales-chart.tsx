@@ -29,7 +29,7 @@ export function RecentSalesChart() {
       <ResponsiveContainer width="100%" height={250}>
         <BarChart data={data} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
           <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
-          <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => `₹${value / 1000}k`} />
+          <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => `${value / 1000}k`} />
           <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
           <Bar dataKey="sales" fill="var(--color-sales)" radius={4} />
         </BarChart>
