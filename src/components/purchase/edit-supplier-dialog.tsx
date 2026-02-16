@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ interface EditSupplierDialogProps {
   supplier: Supplier | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (values: SupplierFormValues) => void;
+  onSave: (values: Supplier) => void;
 }
 
 export function EditSupplierDialog({
@@ -65,7 +66,9 @@ export function EditSupplierDialog({
   }, [supplier, form]);
 
   function onSubmit(data: SupplierFormValues) {
-    onSave(data);
+    if (supplier) {
+      onSave({ ...supplier, ...data });
+    }
     onOpenChange(false);
   }
 

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -25,17 +26,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Download, Edit, MoreHorizontal, ArrowLeft } from "lucide-react";
-import { suppliers } from "@/lib/data";
+import { suppliers as initialSuppliers } from "@/lib/data";
 import { downloadCsv } from "@/lib/utils";
 import Link from "next/link";
 import type { Supplier } from "@/lib/types";
 import { EditSupplierDialog } from "@/components/purchase/edit-supplier-dialog";
 
 export default function PurchaseSuppliersPage() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
   const [editSupplier, setEditSupplier] = useState<Supplier | null>(null);
 
   const handleExport = () => {
     downloadCsv(suppliers, "suppliers.csv");
+  };
+
+  const handleSave = (updatedSupplier: Supplier) => {
+    setSuppliers(suppliers.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
+    setEditSupplier(null);
   };
 
   return (
@@ -118,7 +125,7 @@ export default function PurchaseSuppliersPage() {
           supplier={editSupplier}
           open={!!editSupplier}
           onOpenChange={(open) => !open && setEditSupplier(null)}
-          onSave={(values) => console.log(values)}
+          onSave={handleSave}
         />
       </main>
     </>
