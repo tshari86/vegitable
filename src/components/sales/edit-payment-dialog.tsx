@@ -24,9 +24,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { PaymentDetail } from "@/lib/types";
 import { useEffect } from "react";
+import { formatCurrency } from "@/lib/utils";
 
 const paymentFormSchema = z.object({
-  dueAmount: z.coerce.number().min(0, "Due amount must be non-negative"),
+  paidAmount: z.coerce.number().min(0, "Paid amount must be non-negative"),
 });
 
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
@@ -35,27 +36,38 @@ interface EditPaymentDialogProps {
   payment: PaymentDetail | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (values: PaymentFormValues) => void;
+  onSave: (values: PaymentDetail) => void;
 }
 
 export function EditPaymentDialog({ payment, open, onOpenChange, onSave }: EditPaymentDialogProps) {
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
-        dueAmount: 0,
+        paidAmount: 0,
     }
   });
 
   useEffect(() => {
     if (payment) {
-        form.reset({ dueAmount: payment.dueAmount });
+        form.reset({ paidAmount: payment.paidAmount });
     }
   }, [payment, form]);
 
   function onSubmit(data: PaymentFormValues) {
-    onSave(data);
+    if (payment) {
+        const newDueAmount = payment.totalAmount - data.paidAmount;
+        const updatedPayment = { 
+            ...payment, 
+            paidAmount: data.paidAmount, 
+            dueAmount: newDueAmount > 0 ? newDueAmount : 0,
+        };
+        onSave(updatedPayment);
+    }
     onOpenChange(false);
   }
+
+  const watchedPaidAmount = form.watch("paidAmount");
+  const dueAmount = payment && typeof watchedPaidAmount === 'number' ? payment.totalAmount - watchedPaidAmount : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -63,17 +75,18 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onSave }: EditP
         <DialogHeader>
           <DialogTitle>Edit Payment</DialogTitle>
           <DialogDescription>
-            Update the due amount for {payment?.partyName}.
+            Update the payment for {payment?.partyName}.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <p><strong>Total Amount:</strong> {formatCurrency(payment?.totalAmount || 0)}</p>
             <FormField
               control={form.control}
-              name="dueAmount"
+              name="paidAmount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Due Amount</FormLabel>
+                  <FormLabel>Paid Amount</FormLabel>
                   <FormControl>
                     <Input type="number" {...field} />
                   </FormControl>
@@ -81,6 +94,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onSave }: EditP
                 </FormItem>
               )}
             />
+            <p><strong>Due Amount:</strong> {formatCurrency(dueAmount >= 0 ? dueAmount : 0)}</p>
             <DialogFooter>
               <Button type="submit">Save Changes</Button>
             </DialogFooter>

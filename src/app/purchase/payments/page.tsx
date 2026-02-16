@@ -27,16 +27,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Download, Edit, MoreHorizontal, ArrowLeft } from "lucide-react";
-import { supplierPaymentDetails } from "@/lib/data";
 import { downloadCsv, formatCurrency } from "@/lib/utils";
 import type { PaymentDetail } from "@/lib/types";
 import { EditPaymentDialog } from "@/components/purchase/edit-payment-dialog";
+import { useTransactions } from "@/context/transaction-provider";
 
 export default function SupplierPaymentsPage() {
+  const { supplierPayments, updateSupplierPayment } = useTransactions();
   const [editPayment, setEditPayment] = useState<PaymentDetail | null>(null);
   
   const handleExport = () => {
-    downloadCsv(supplierPaymentDetails, "supplier_payments.csv");
+    downloadCsv(supplierPayments, "supplier_payments.csv");
+  };
+
+  const handleSave = (updatedPayment: PaymentDetail) => {
+    updateSupplierPayment(updatedPayment);
+    setEditPayment(null);
   };
 
   return (
@@ -73,13 +79,11 @@ export default function SupplierPaymentsPage() {
                   <TableHead className="text-right">Total Amount</TableHead>
                   <TableHead className="text-right">Paid Amount</TableHead>
                   <TableHead className="text-right">Due Amount</TableHead>
-                  <TableHead>
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
+                  <TableHead>Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {supplierPaymentDetails.map((payment) => (
+                {supplierPayments.map((payment) => (
                   <TableRow key={payment.id}>
                     <TableCell className="font-medium">
                       {payment.partyId}
@@ -129,7 +133,7 @@ export default function SupplierPaymentsPage() {
           payment={editPayment}
           open={!!editPayment}
           onOpenChange={(open) => !open && setEditPayment(null)}
-          onSave={(values) => console.log(values)}
+          onSave={handleSave}
         />
       </main>
     </>

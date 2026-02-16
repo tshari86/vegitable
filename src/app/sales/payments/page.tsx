@@ -27,17 +27,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Download, Edit, MoreHorizontal, ArrowLeft } from "lucide-react";
-import { customerPaymentDetails } from "@/lib/data";
 import { downloadCsv, formatCurrency } from "@/lib/utils";
 import type { PaymentDetail } from "@/lib/types";
 import { EditPaymentDialog } from "@/components/sales/edit-payment-dialog";
+import { useTransactions } from "@/context/transaction-provider";
 
 
 export default function CustomerPaymentsPage() {
+    const { customerPayments, updateCustomerPayment } = useTransactions();
     const [editPayment, setEditPayment] = useState<PaymentDetail | null>(null);
 
     const handleExport = () => {
-        downloadCsv(customerPaymentDetails, "customer_payments.csv");
+        downloadCsv(customerPayments, "customer_payments.csv");
+    }
+
+    const handleSave = (updatedPayment: PaymentDetail) => {
+        updateCustomerPayment(updatedPayment);
+        setEditPayment(null);
     }
 
   return (
@@ -74,13 +80,11 @@ export default function CustomerPaymentsPage() {
                     <TableHead className="text-right">Total Amount</TableHead>
                     <TableHead className="text-right">Paid Amount</TableHead>
                     <TableHead className="text-right">Due Amount</TableHead>
-                    <TableHead>
-                      <span className="sr-only">Actions</span>
-                    </TableHead>
+                    <TableHead>Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {customerPaymentDetails.map((payment) => (
+                  {customerPayments.map((payment) => (
                     <TableRow key={payment.id}>
                       <TableCell className="font-medium">
                         {payment.partyId}
@@ -127,7 +131,7 @@ export default function CustomerPaymentsPage() {
             payment={editPayment}
             open={!!editPayment}
             onOpenChange={(open) => !open && setEditPayment(null)}
-            onSave={(values) => console.log(values)}
+            onSave={handleSave}
         />
       </main>
     </>

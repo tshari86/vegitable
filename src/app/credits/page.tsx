@@ -22,7 +22,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { customerPaymentDetails, supplierPaymentDetails } from "@/lib/data";
+import { useTransactions } from "@/context/transaction-provider";
 import { downloadCsv, formatCurrency } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -32,12 +32,13 @@ import { Download, Search } from "lucide-react";
 export default function CreditsPage() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("customer");
+  const { customerPayments, supplierPayments } = useTransactions();
 
-  const filteredSupplierCredits = supplierPaymentDetails
+  const filteredSupplierCredits = supplierPayments
     .filter(p => p.dueAmount > 0)
     .filter(p => p.partyName.toLowerCase().includes(search.toLowerCase()));
   
-  const filteredCustomerCredits = customerPaymentDetails
+  const filteredCustomerCredits = customerPayments
     .filter(p => p.dueAmount > 0)
     .filter(p => p.partyName.toLowerCase().includes(search.toLowerCase()));
 

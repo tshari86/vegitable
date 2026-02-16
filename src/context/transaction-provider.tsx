@@ -1,18 +1,25 @@
 "use client";
 
 import { createContext, useContext, useState } from 'react';
-import type { Transaction } from '@/lib/types';
+import type { Transaction, PaymentDetail } from '@/lib/types';
 import { initialTransactions } from '@/lib/transactions';
+import { initialSupplierPaymentDetails, initialCustomerPaymentDetails } from '@/lib/data';
 
 interface TransactionContextType {
     transactions: Transaction[];
     addTransaction: (transactions: Omit<Transaction, 'id'>[]) => void;
+    supplierPayments: PaymentDetail[];
+    customerPayments: PaymentDetail[];
+    updateSupplierPayment: (payment: PaymentDetail) => void;
+    updateCustomerPayment: (payment: PaymentDetail) => void;
 }
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
 export function TransactionProvider({ children }: { children: React.ReactNode }) {
     const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+    const [supplierPayments, setSupplierPayments] = useState<PaymentDetail[]>(initialSupplierPaymentDetails);
+    const [customerPayments, setCustomerPayments] = useState<PaymentDetail[]>(initialCustomerPaymentDetails);
 
     const addTransaction = (newTransactions: Omit<Transaction, 'id'>[]) => {
         setTransactions(prev => [
@@ -21,8 +28,16 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
         ]);
     };
 
+    const updateSupplierPayment = (updatedPayment: PaymentDetail) => {
+        setSupplierPayments(prev => prev.map(p => p.id === updatedPayment.id ? updatedPayment : p));
+    }
+
+    const updateCustomerPayment = (updatedPayment: PaymentDetail) => {
+        setCustomerPayments(prev => prev.map(p => p.id === updatedPayment.id ? updatedPayment : p));
+    }
+
     return (
-        <TransactionContext.Provider value={{ transactions, addTransaction }}>
+        <TransactionContext.Provider value={{ transactions, addTransaction, supplierPayments, customerPayments, updateSupplierPayment, updateCustomerPayment }}>
             {children}
         </TransactionContext.Provider>
     );
