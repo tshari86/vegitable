@@ -210,36 +210,31 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
     };
 
     const addSupplier = (newSupplierData: Omit<Supplier, 'id'>) => {
-        setSuppliers(prev => {
-            const existingSupplier = prev.find(s => s.name.toLowerCase() === newSupplierData.name.toLowerCase());
-            if (existingSupplier) {
-                return prev;
-            }
+        if (suppliers.some(s => s.name.toLowerCase() === newSupplierData.name.toLowerCase())) {
+            return;
+        }
+        
+        const newSupplierId = `SUP${(suppliers.length + 1).toString().padStart(3, '0')}`;
+        const newSupplier: Supplier = {
+            id: newSupplierId,
+            name: newSupplierData.name,
+            contact: newSupplierData.contact || '',
+            address: newSupplierData.address || '',
+        };
+        
+        const newPaymentId = (Math.max(0, ...supplierPayments.map(p => parseInt(p.id) || 0)) + 1).toString();
+        const newPayment: PaymentDetail = {
+            id: newPaymentId,
+            partyId: newSupplier.id,
+            partyName: newSupplier.name,
+            totalAmount: 0,
+            paidAmount: 0,
+            dueAmount: 0,
+            paymentMethod: 'Credit',
+        };
 
-            const newSupplierId = `SUP${(prev.length + 1).toString().padStart(3, '0')}`;
-            const newSupplier: Supplier = {
-                id: newSupplierId,
-                name: newSupplierData.name,
-                contact: newSupplierData.contact || '',
-                address: newSupplierData.address || '',
-            };
-
-            setSupplierPayments(prevPayments => {
-                const newPaymentId = (Math.max(0, ...prevPayments.map(p => parseInt(p.id) || 0)) + 1).toString();
-                const newPayment: PaymentDetail = {
-                    id: newPaymentId,
-                    partyId: newSupplier.id,
-                    partyName: newSupplier.name,
-                    totalAmount: 0,
-                    paidAmount: 0,
-                    dueAmount: 0,
-                    paymentMethod: 'Credit',
-                };
-                return [...prevPayments, newPayment];
-            });
-
-            return [...prev, newSupplier];
-        });
+        setSuppliers(prev => [...prev, newSupplier]);
+        setSupplierPayments(prev => [...prev, newPayment]);
     };
 
     const updateSupplierPayment = (updatedPayment: PaymentDetail) => {
@@ -252,7 +247,6 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
 
     const updateSupplier = (updatedSupplier: Supplier) => {
         setSuppliers(prev => prev.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
-        setSupplierPayments(prev => prev.map(p => p.partyId === updatedSupplier.id ? {...p, partyName: updatedSupplier.name} : p));
     }
 
     const updateCustomer = (updatedCustomer: Customer) => {
