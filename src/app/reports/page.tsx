@@ -30,12 +30,24 @@ import { Calendar } from "@/components/ui/calendar";
 import { downloadCsv, formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useTransactions } from "@/context/transaction-provider";
+import type { Transaction } from "@/lib/types";
 
 export default function ReportsPage() {
     const { transactions } = useTransactions();
 
     const handleExport = () => {
-        downloadCsv(transactions, "transactions.csv");
+        const dataToExport = [...transactions];
+        const totalAmount = dataToExport.reduce((acc, curr) => acc + curr.amount, 0);
+        const totalRow = {
+            id: 'TOTAL',
+            date: '',
+            party: 'Total',
+            type: '',
+            item: '',
+            amount: totalAmount,
+            payment: '',
+        };
+        downloadCsv([...dataToExport, totalRow as Transaction], "transactions.csv");
     }
   return (
     <>

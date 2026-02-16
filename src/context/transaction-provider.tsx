@@ -1,9 +1,24 @@
+
 "use client";
 
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import type { Transaction, PaymentDetail } from '@/lib/types';
 import { initialTransactions } from '@/lib/transactions';
 import { initialSupplierPaymentDetails, initialCustomerPaymentDetails } from '@/lib/data';
+
+// Helper to get initial state from localStorage or defaults
+const getInitialState = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') {
+        return defaultValue;
+    }
+    try {
+        const storedValue = window.localStorage.getItem(key);
+        return storedValue ? JSON.parse(storedValue) : defaultValue;
+    } catch (error) {
+        console.error(`Error reading from localStorage for key "${key}":`, error);
+        return defaultValue;
+    }
+};
 
 interface TransactionContextType {
     transactions: Transaction[];
@@ -17,14 +32,39 @@ interface TransactionContextType {
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
 export function TransactionProvider({ children }: { children: React.ReactNode }) {
-    const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
-    const [supplierPayments, setSupplierPayments] = useState<PaymentDetail[]>(initialSupplierPaymentDetails);
-    const [customerPayments, setCustomerPayments] = useState<PaymentDetail[]>(initialCustomerPaymentDetails);
+    const [transactions, setTransactions] = useState<Transaction[]>(() => getInitialState('transactions', initialTransactions));
+    const [supplierPayments, setSupplierPayments] = useState<PaymentDetail[]>(() => getInitialState('supplierPayments', initialSupplierPaymentDetails));
+    const [customerPayments, setCustomerPayments] = useState<PaymentDetail[]>(() => getInitialState('customerPayments', initialCustomerPaymentDetails));
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem('transactions', JSON.stringify(transactions));
+        } catch (error) {
+            console.error('Error writing to localStorage for key "transactions":', error);
+        }
+    }, [transactions]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem('supplierPayments', JSON.stringify(supplierPayments));
+        } catch (error) {
+            console.error('Error writing to localStorage for key "supplierPayments":', error);
+        }
+    }, [supplierPayments]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem('customerPayments', JSON.stringify(customerPayments));
+        } catch (error) {
+            console.error('Error writing to localStorage for key "customerPayments":', error);
+        }
+    }, [customerPayments]);
+
 
     const addTransaction = (newTransactions: Omit<Transaction, 'id'>[]) => {
         setTransactions(prev => [
             ...prev, 
-            ...newTransactions.map((t, i) => ({...t, id: prev.length + i + 1}))
+            ...newTransactions.map((t, i) => ({...t, id: (prev.length > 0 ? Math.max(...prev.map(p => p.id)) : 0) + i + 1}))
         ]);
     };
 

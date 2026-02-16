@@ -38,7 +38,22 @@ export default function SupplierPaymentsPage() {
   const [editPayment, setEditPayment] = useState<PaymentDetail | null>(null);
   
   const handleExport = () => {
-    downloadCsv(supplierPayments, "supplier_payments.csv");
+    const dataToExport = [...supplierPayments];
+    const totalRow = dataToExport.reduce((acc, curr) => {
+        acc.totalAmount += curr.totalAmount;
+        acc.paidAmount += curr.paidAmount;
+        acc.dueAmount += curr.dueAmount;
+        return acc;
+    }, {
+        id: 'TOTAL',
+        partyId: '',
+        partyName: 'Total',
+        totalAmount: 0,
+        paidAmount: 0,
+        dueAmount: 0,
+        paymentMethod: ''
+    });
+    downloadCsv([...dataToExport, totalRow], "supplier_payments.csv");
   };
 
   const handleSave = (updatedPayment: PaymentDetail) => {

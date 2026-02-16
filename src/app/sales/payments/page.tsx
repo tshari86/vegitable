@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -38,7 +39,22 @@ export default function CustomerPaymentsPage() {
     const [editPayment, setEditPayment] = useState<PaymentDetail | null>(null);
 
     const handleExport = () => {
-        downloadCsv(customerPayments, "customer_payments.csv");
+        const dataToExport = [...customerPayments];
+        const totalRow = dataToExport.reduce((acc, curr) => {
+            acc.totalAmount += curr.totalAmount;
+            acc.paidAmount += curr.paidAmount;
+            acc.dueAmount += curr.dueAmount;
+            return acc;
+        }, {
+            id: 'TOTAL',
+            partyId: '',
+            partyName: 'Total',
+            totalAmount: 0,
+            paidAmount: 0,
+            dueAmount: 0,
+            paymentMethod: ''
+        });
+        downloadCsv([...dataToExport, totalRow], "customer_payments.csv");
     }
 
     const handleSave = (updatedPayment: PaymentDetail) => {

@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Search } from "lucide-react";
+import type { PaymentDetail } from "@/lib/types";
 
 export default function CreditsPage() {
   const [search, setSearch] = useState("");
@@ -43,11 +44,33 @@ export default function CreditsPage() {
     .filter(p => p.partyName.toLowerCase().includes(search.toLowerCase()));
 
   const handleExport = () => {
+    let dataToExport: PaymentDetail[];
+    let filename: string;
+
     if (activeTab === 'customer') {
-        downloadCsv(filteredCustomerCredits, 'customer_credits.csv');
+        dataToExport = filteredCustomerCredits;
+        filename = 'customer_credits.csv';
     } else {
-        downloadCsv(filteredSupplierCredits, 'supplier_credits.csv');
+        dataToExport = filteredSupplierCredits;
+        filename = 'supplier_credits.csv';
     }
+
+    const totalRow = dataToExport.reduce((acc, curr) => {
+        acc.totalAmount += curr.totalAmount;
+        acc.paidAmount += curr.paidAmount;
+        acc.dueAmount += curr.dueAmount;
+        return acc;
+    }, {
+        id: 'TOTAL',
+        partyId: '',
+        partyName: 'Total',
+        totalAmount: 0,
+        paidAmount: 0,
+        dueAmount: 0,
+        paymentMethod: ''
+    });
+    
+    downloadCsv([...dataToExport, totalRow], filename);
   }
 
   return (
