@@ -1,172 +1,75 @@
 
 "use client";
+
 import Header from "@/components/layout/header";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { useTransactions } from "@/context/transaction-provider";
-import { downloadCsv, formatCurrency } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Download, Search } from "lucide-react";
-import type { PaymentDetail } from "@/lib/types";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+
+const SupplierIcon = () => {
+    return (
+        <div className="h-20 w-20 flex items-center justify-center text-foreground">
+             <svg
+                viewBox="0 0 100 100"
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-full w-full"
+                fill="currentColor"
+            >
+              <path d="M50 20a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 16a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"/>
+              <path d="M50 42c-11.05 0-20 8.95-20 20v2h40v-2c0-11.05-8.95-20-20-20zm-16 18v-2c0-8.82 7.18-16 16-16s16 7.18 16 16v2H34z"/>
+              <path d="M22.5,58.3c-0.8-0.5-1.8-0.2-2.3,0.6l-5.6,8.5c-0.5,0.8-0.2,1.8,0.6,2.3c0.8,0.5,1.8,0.2,2.3-0.6l5.6-8.5 C23.6,59.8,23.3,58.8,22.5,58.3z"/>
+              <path d="M77.5,58.3c-0.8-0.5-1.8-0.2-2.3,0.6l-5.6,8.5c-0.5,0.8-0.2,1.8,0.6,2.3c0.8,0.5,1.8,0.2,2.3-0.6l5.6-8.5 C78.6,59.8,78.3,58.8,77.5,58.3z"/>
+            </svg>
+        </div>
+    )
+}
+
+const BuyerIcon = () => {
+    return (
+        <div className="h-20 w-20">
+            <svg
+                viewBox="0 0 100 100"
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-full w-full"
+                fill="none"
+                strokeWidth="4"
+            >
+                <circle cx="50" cy="30" r="10" stroke="hsl(var(--primary))"/>
+                <path d="M50 40 V 60" stroke="hsl(var(--primary))"/>
+                <path d="M40 85 L 50 60 L 60 85 Z" stroke="hsl(var(--primary))" fill="none" />
+                <path d="M35 50 h -10 a 5 5 0 0 0 -5 5 v 10 a 5 5 0 0 0 5 5 h 10" stroke="orange"/>
+                <path d="M25 50 V 40" stroke="orange"/>
+                <path d="M65 50 h 10 a 5 5 0 0 1 5 5 v 10 a 5 5 0 0 1 -5 5 h -10" stroke="orange"/>
+                <path d="M75 50 V 40" stroke="orange"/>
+            </svg>
+        </div>
+    )
+}
 
 export default function CreditsPage() {
-  const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("customer");
-  const { customerPayments, supplierPayments } = useTransactions();
-
-  const filteredSupplierCredits = supplierPayments
-    .filter(p => p.dueAmount > 0)
-    .filter(p => p.partyName.toLowerCase().includes(search.toLowerCase()));
-  
-  const filteredCustomerCredits = customerPayments
-    .filter(p => p.dueAmount > 0)
-    .filter(p => p.partyName.toLowerCase().includes(search.toLowerCase()));
-
-  const handleExport = () => {
-    let dataToExport: PaymentDetail[];
-    let filename: string;
-
-    if (activeTab === 'customer') {
-        dataToExport = filteredCustomerCredits;
-        filename = 'sales_credits.csv';
-    } else {
-        dataToExport = filteredSupplierCredits;
-        filename = 'purchase_credits.csv';
-    }
-
-    const totalRow = dataToExport.reduce((acc, curr) => {
-        acc.totalAmount += curr.totalAmount;
-        acc.paidAmount += curr.paidAmount;
-        acc.dueAmount += curr.dueAmount;
-        return acc;
-    }, {
-        id: 'TOTAL',
-        partyId: '',
-        partyName: 'Total',
-        totalAmount: 0,
-        paidAmount: 0,
-        dueAmount: 0,
-        paymentMethod: ''
-    });
-    
-    downloadCsv([...dataToExport, totalRow], filename);
-  }
-
-  return (
+    return (
     <>
-      <Header title="Credit Management">
-        <Button size="sm" variant="outline" className="gap-1" onClick={handleExport}>
-            <Download className="h-4 w-4" />
-            Export CSV
-        </Button>
-      </Header>
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-        <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-                type="search"
-                placeholder="Search by party name..."
-                className="pl-8 sm:w-[300px]"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-            />
+      <Header title="Transactions" />
+      <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-6">
+        <div className="grid w-full max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
+          <Link href="/purchase/payments" className="flex">
+            <Card className="flex-1 hover:bg-accent transition-colors">
+              <CardContent className="flex flex-col items-center justify-center gap-4 p-6 text-center">
+                <SupplierIcon />
+                <CardTitle className="text-lg font-semibold">Supplier Transaction</CardTitle>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/sales/payments" className="flex">
+            <Card className="flex-1 hover:bg-accent transition-colors">
+              <CardContent className="flex flex-col items-center justify-center gap-4 p-6 text-center">
+                <BuyerIcon />
+                <CardTitle className="text-lg font-semibold">Buyer Transaction</CardTitle>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
-        <Tabs defaultValue="customer" onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="customer">Sales</TabsTrigger>
-            <TabsTrigger value="supplier">Purchase</TabsTrigger>
-          </TabsList>
-          <TabsContent value="customer">
-            <Card>
-              <CardHeader>
-                <CardTitle>Sales</CardTitle>
-                <CardDescription>
-                  Outstanding payments to be received from customers.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Customer ID</TableHead>
-                      <TableHead>Customer Name</TableHead>
-                      <TableHead className="text-right">Total Amount</TableHead>
-                      <TableHead className="text-right">Paid Amount</TableHead>
-                      <TableHead className="text-right">Due Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredCustomerCredits.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell>{payment.partyId}</TableCell>
-                        <TableCell>{payment.partyName}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(payment.totalAmount)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(payment.paidAmount)}</TableCell>
-                        <TableCell className="text-right font-medium text-destructive">{formatCurrency(payment.dueAmount)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="supplier">
-            <Card>
-              <CardHeader>
-                <CardTitle>Purchase</CardTitle>
-                <CardDescription>
-                  Outstanding payments to be made to suppliers.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Supplier ID</TableHead>
-                      <TableHead>Supplier Name</TableHead>
-                      <TableHead className="text-right">Total Amount</TableHead>
-                      <TableHead className="text-right">Paid Amount</TableHead>
-                      <TableHead className="text-right">Due Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSupplierCredits.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell>{payment.partyId}</TableCell>
-                        <TableCell>{payment.partyName}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(payment.totalAmount)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(payment.paidAmount)}</TableCell>
-                        <TableCell className="text-right font-medium text-destructive">{formatCurrency(payment.dueAmount)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
       </main>
     </>
   );
 }
+
