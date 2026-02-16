@@ -32,7 +32,6 @@ const menuItems = [
     { href: '/vegetable-intake', label: 'Vegetable Intake', icon: Leaf },
     { href: '/sales', label: 'Sales', icon: ShoppingCart },
     { href: '/credits', label: 'Payments', icon: CreditCard },
-    { href: '/purchase/suppliers', label: 'Supplier', icon: Users },
     { href: '/sales/customers', label: 'Buyer', icon: Users },
     { href: '/settings', label: 'Accounts', icon: BookUser },
     { href: '#', label: 'Log out', icon: LogOut },
