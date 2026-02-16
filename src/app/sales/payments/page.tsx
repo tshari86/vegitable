@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Download, Edit, MoreHorizontal, ArrowLeft } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { downloadCsv, formatCurrency } from "@/lib/utils";
 import type { PaymentDetail } from "@/lib/types";
 import { BuyerAdjustmentDialog } from "@/components/sales/buyer-adjustment-dialog";
@@ -37,9 +38,14 @@ import { useTransactions } from "@/context/transaction-provider";
 export default function CustomerPaymentsPage() {
     const { customerPayments, updateCustomerPayment } = useTransactions();
     const [editPayment, setEditPayment] = useState<PaymentDetail | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const filteredPayments = customerPayments.filter((payment) =>
+        payment.partyName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const handleExport = () => {
-        const dataToExport = [...customerPayments];
+        const dataToExport = [...filteredPayments];
         const totalRow = dataToExport.reduce((acc, curr) => {
             acc.totalAmount += curr.totalAmount;
             acc.paidAmount += curr.paidAmount;
@@ -66,6 +72,12 @@ export default function CustomerPaymentsPage() {
     <>
       <Header title="Customer Payment Details">
         <div className="flex items-center gap-2">
+            <Input 
+                placeholder="Search Customer..."
+                className="w-48"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <Link href="/credits">
                 <Button size="sm" variant="outline" className="gap-1">
                     <ArrowLeft className="h-4 w-4" />
@@ -100,7 +112,7 @@ export default function CustomerPaymentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {customerPayments.map((payment) => (
+                  {filteredPayments.map((payment) => (
                     <TableRow key={payment.id}>
                       <TableCell className="font-medium">
                         {payment.partyId}

@@ -7,7 +7,7 @@ import Link from "next/link";
 
 const SupplierIcon = () => {
     return (
-        <div className="h-20 w-20 flex items-center justify-center text-foreground">
+        <div className="h-20 w-20 flex items-center justify-center text-primary">
              <svg
                 viewBox="0 0 100 100"
                 xmlns="http://www.w3.org/2000/svg"
