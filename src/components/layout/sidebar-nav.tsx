@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link";
@@ -23,6 +24,7 @@ import {
   ShoppingCart,
   CreditCard,
   Users,
+  User,
   BookUser,
 } from "lucide-react";
 
@@ -33,7 +35,7 @@ const menuItems = [
     { href: '/sales', label: 'Sales', icon: ShoppingCart },
     { href: '/credits', label: 'Payments', icon: CreditCard },
     { href: '/purchase/suppliers', label: 'Supplier', icon: Users },
-    { href: '/sales/customers', label: 'Buyer', icon: Users },
+    { href: '/sales/customers', label: 'Buyer', icon: User },
     { href: '/settings', label: 'Accounts', icon: BookUser },
     { href: '#', label: 'Log out', icon: LogOut },
 ]
