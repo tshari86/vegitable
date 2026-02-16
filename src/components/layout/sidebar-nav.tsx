@@ -1,4 +1,3 @@
-
 "use client"
 
 import Link from "next/link";
@@ -16,23 +15,15 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils";
 import {
   Leaf,
   LineChart,
   LogOut,
-  Settings,
   ShoppingCart,
-  MoreHorizontal,
+  CreditCard,
+  Users,
+  BookUser,
 } from "lucide-react";
 
 
@@ -40,10 +31,25 @@ const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LineChart },
     { href: '/vegetable-intake', label: 'Vegetable Intake', icon: Leaf },
     { href: '/sales', label: 'Sales', icon: ShoppingCart },
+    { href: '/credits', label: 'Payments', icon: CreditCard },
+    { href: '/purchase/suppliers', label: 'Supplier', icon: Users },
+    { href: '/sales/customers', label: 'Buyer', icon: Users },
+    { href: '/settings', label: 'Accounts', icon: BookUser },
+    { href: '#', label: 'Log out', icon: LogOut },
 ]
 
 export function SidebarNav() {
     const pathname = usePathname();
+
+    const getIsActive = (href: string, currentPathname: string) => {
+        if (href === '/dashboard') {
+            return currentPathname === '/dashboard' || currentPathname === '/';
+        }
+        if (href === '#') {
+            return false;
+        }
+        return currentPathname.startsWith(href);
+    }
 
     return (
         <>
@@ -61,10 +67,10 @@ export function SidebarNav() {
             <SidebarContent className="p-2">
                 <SidebarMenu>
                     {menuItems.map((item) => (
-                         <SidebarMenuItem key={item.href}>
+                         <SidebarMenuItem key={item.label}>
                             <SidebarMenuButton
                                 asChild
-                                isActive={pathname.startsWith(item.href)}
+                                isActive={getIsActive(item.href, pathname)}
                                 className="w-full justify-start"
                             >
                                 <Link href={item.href}>
@@ -77,36 +83,16 @@ export function SidebarNav() {
                 </SidebarMenu>
             </SidebarContent>
             <SidebarFooter className="p-2 border-t">
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="w-full justify-start gap-2 px-2">
-                          <Avatar className="h-8 w-8">
-                              <AvatarImage src="https://picsum.photos/seed/1/100/100" alt="@owner" data-ai-hint="man portrait" />
-                              <AvatarFallback>SO</AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col items-start">
-                              <span className="text-sm font-medium">Shop Owner</span>
-                              <span className="text-xs text-muted-foreground">owner@email.com</span>
-                          </div>
-                          <MoreHorizontal className="ml-auto h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            <Link href="/settings" className="flex items-center w-full">
-                                <Settings className="mr-2 h-4 w-4" />
-                                <span>Settings</span>
-                            </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            <LogOut className="mr-2 h-4 w-4" />
-                            <span>Log out</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <Button variant="ghost" className="w-full justify-start gap-2 px-2">
+                    <Avatar className="h-8 w-8">
+                        <AvatarImage src="https://picsum.photos/seed/1/100/100" alt="@owner" data-ai-hint="man portrait" />
+                        <AvatarFallback>SO</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start">
+                        <span className="text-sm font-medium">Shop Owner</span>
+                        <span className="text-xs text-muted-foreground">owner@email.com</span>
+                    </div>
+                </Button>
             </SidebarFooter>
         </>
     )
