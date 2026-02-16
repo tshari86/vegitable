@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link";
@@ -43,8 +44,9 @@ import {
 const menuItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/vegetable-intake', label: 'Vegetable Intake', icon: Carrot },
-    { href: '/purchase', label: 'Purchase', icon: Truck },
     { href: '/sales', label: 'Sales', icon: ShoppingCart },
+    { href: '/purchase', label: 'Purchase', icon: Truck },
+    { href: '/sales-old', label: 'Sales Old', icon: ShoppingCart },
     { href: '/products', label: 'Products', icon: Package },
     { href: '/reports', label: 'Transaction Report', icon: LineChart },
     { href: '/credits', label: 'Credits', icon: CreditCard },
