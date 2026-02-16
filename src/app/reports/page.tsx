@@ -27,23 +27,20 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarIcon, Filter, Download } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { formatCurrency } from "@/lib/utils";
+import { downloadCsv, formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-
-const reportData = [
-  { id: 1, date: "2024-07-20", party: "Venkatesh", type: "Sale", item: "Tomato", amount: 1250, payment: "UPI/Digital" },
-  { id: 2, date: "2024-07-20", party: "Koyambedu Market", type: "Purchase", item: "Onion", amount: 5500, payment: "Credit" },
-  { id: 3, date: "2024-07-19", party: "Anbu Retail", type: "Sale", item: "Carrot", amount: 800, payment: "Credit" },
-  { id: 4, date: "2024-07-18", party: "Ooty Farms", type: "Purchase", item: "Potato", amount: 12000, payment: "Cash" },
-  { id: 5, date: "2024-07-18", party: "Suresh Kumar", type: "Sale", item: "Cabbage", amount: 350, payment: "Cash" },
-];
-
+import { useTransactions } from "@/context/transaction-provider";
 
 export default function ReportsPage() {
+    const { transactions } = useTransactions();
+
+    const handleExport = () => {
+        downloadCsv(transactions, "transactions.csv");
+    }
   return (
     <>
       <Header title="Transaction Report">
-        <Button size="sm" variant="outline" className="gap-1">
+        <Button size="sm" variant="outline" className="gap-1" onClick={handleExport}>
             <Download className="h-4 w-4" />
             Export CSV
         </Button>
@@ -113,7 +110,7 @@ export default function ReportsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {reportData.map((row) => (
+                {transactions.map((row) => (
                     <TableRow key={row.id}>
                         <TableCell>{row.date}</TableCell>
                         <TableCell>{row.party}</TableCell>

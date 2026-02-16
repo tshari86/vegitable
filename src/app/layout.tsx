@@ -3,6 +3,7 @@ import './globals.css';
 import { Sidebar, SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
+import { TransactionProvider } from '@/context/transaction-provider';
 
 export const metadata: Metadata = {
   title: 'OM Saravana Billing',
@@ -22,12 +23,14 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <SidebarProvider>
-          <Sidebar>
-            <SidebarNav />
-          </Sidebar>
-          <SidebarInset>{children}</SidebarInset>
-        </SidebarProvider>
+        <TransactionProvider>
+          <SidebarProvider>
+            <Sidebar>
+              <SidebarNav />
+            </Sidebar>
+            <SidebarInset>{children}</SidebarInset>
+          </SidebarProvider>
+        </TransactionProvider>
         <Toaster />
       </body>
     </html>

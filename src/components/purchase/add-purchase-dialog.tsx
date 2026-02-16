@@ -34,6 +34,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PlusCircle, Trash } from "lucide-react";
 import { products } from "@/lib/data";
 import { useState } from "react";
+import { useTransactions } from "@/context/transaction-provider";
+import type { Transaction } from "@/lib/types";
 
 const purchaseFormSchema = z.object({
   supplierName: z.string().min(1, "Supplier name is required"),
@@ -51,6 +53,7 @@ type PurchaseFormValues = z.infer<typeof purchaseFormSchema>;
 
 export function AddPurchaseDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const { addTransaction } = useTransactions();
   const form = useForm<PurchaseFormValues>({
     resolver: zodResolver(purchaseFormSchema),
     defaultValues: {
@@ -68,8 +71,15 @@ export function AddPurchaseDialog({ children }: { children: React.ReactNode }) {
   });
 
   function onSubmit(data: PurchaseFormValues) {
-    console.log(data);
-    // Here you would typically handle the form submission, e.g., send to an API
+    const newTransactions: Omit<Transaction, 'id'>[] = data.items.map(item => ({
+        date: new Date().toISOString().split('T')[0],
+        party: data.supplierName,
+        type: 'Purchase',
+        item: item.itemName,
+        amount: item.price * item.quantity,
+        payment: data.paymentMethod,
+    }));
+    addTransaction(newTransactions);
     setOpen(false);
     form.reset();
   }

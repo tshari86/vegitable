@@ -23,7 +23,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { customerPaymentDetails, supplierPaymentDetails } from "@/lib/data";
-import { formatCurrency } from "@/lib/utils";
+import { downloadCsv, formatCurrency } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import { Download, Search } from "lucide-react";
 
 export default function CreditsPage() {
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("customer");
 
   const filteredSupplierCredits = supplierPaymentDetails
     .filter(p => p.dueAmount > 0)
@@ -40,10 +41,18 @@ export default function CreditsPage() {
     .filter(p => p.dueAmount > 0)
     .filter(p => p.partyName.toLowerCase().includes(search.toLowerCase()));
 
+  const handleExport = () => {
+    if (activeTab === 'customer') {
+        downloadCsv(filteredCustomerCredits, 'customer_credits.csv');
+    } else {
+        downloadCsv(filteredSupplierCredits, 'supplier_credits.csv');
+    }
+  }
+
   return (
     <>
       <Header title="Credit Management">
-        <Button size="sm" variant="outline" className="gap-1">
+        <Button size="sm" variant="outline" className="gap-1" onClick={handleExport}>
             <Download className="h-4 w-4" />
             Export CSV
         </Button>
@@ -59,7 +68,7 @@ export default function CreditsPage() {
                 onChange={(e) => setSearch(e.target.value)}
             />
         </div>
-        <Tabs defaultValue="customer">
+        <Tabs defaultValue="customer" onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="customer">Customer Credits</TabsTrigger>
             <TabsTrigger value="supplier">Supplier Credits</TabsTrigger>

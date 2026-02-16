@@ -1,4 +1,5 @@
 
+"use client";
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,10 +25,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Download, Edit, MoreHorizontal, PlusCircle, Trash } from "lucide-react";
 import { products } from "@/lib/data";
-import { formatCurrency } from "@/lib/utils";
+import { downloadCsv, formatCurrency } from "@/lib/utils";
 import { AddProductDialog } from "@/components/products/add-product-dialog";
 
 export default function ProductsPage() {
+    const handleExport = () => {
+        downloadCsv(products, 'products.csv');
+    }
+
   return (
     <>
       <Header title="Products">
@@ -38,7 +43,7 @@ export default function ProductsPage() {
                 Add Product
                 </Button>
             </AddProductDialog>
-            <Button size="sm" variant="outline" className="gap-1">
+            <Button size="sm" variant="outline" className="gap-1" onClick={handleExport}>
                 <Download className="h-4 w-4" />
                 Export CSV
             </Button>
@@ -79,11 +84,11 @@ export default function ProductsPage() {
                         <DropdownMenuTrigger asChild>
                           <Button
                             aria-haspopup="true"
-                            size="sm"
+                            size="icon"
                             variant="ghost"
                           >
-                            Actions
-                            <MoreHorizontal className="h-4 w-4 ml-2" />
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">

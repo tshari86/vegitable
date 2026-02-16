@@ -56,3 +56,13 @@ export type PaymentDetail = {
     dueAmount: number;
     paymentMethod?: string;
 }
+
+export type Transaction = {
+    id: number;
+    date: string;
+    party: string;
+    type: "Sale" | "Purchase";
+    item: string;
+    amount: number;
+    payment: string;
+}
