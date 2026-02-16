@@ -1,3 +1,4 @@
+
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,18 +22,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Edit, MoreHorizontal, PlusCircle, Trash } from "lucide-react";
+import { Download, Edit, MoreHorizontal, PlusCircle, Trash } from "lucide-react";
 import { products } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
+import { AddProductDialog } from "@/components/products/add-product-dialog";
 
 export default function ProductsPage() {
   return (
     <>
       <Header title="Products">
-        <Button size="sm" className="gap-1">
-          <PlusCircle className="h-4 w-4" />
-          Add Product
-        </Button>
+        <div className="flex items-center gap-2">
+            <AddProductDialog>
+                <Button size="sm" className="gap-1">
+                <PlusCircle className="h-4 w-4" />
+                Add Product
+                </Button>
+            </AddProductDialog>
+            <Button size="sm" variant="outline" className="gap-1">
+                <Download className="h-4 w-4" />
+                Export CSV
+            </Button>
+        </div>
       </Header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
         <Card>
@@ -69,11 +79,11 @@ export default function ProductsPage() {
                         <DropdownMenuTrigger asChild>
                           <Button
                             aria-haspopup="true"
-                            size="icon"
+                            size="sm"
                             variant="ghost"
                           >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
+                            Actions
+                            <MoreHorizontal className="h-4 w-4 ml-2" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">

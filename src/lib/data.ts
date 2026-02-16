@@ -22,13 +22,13 @@ export const customers: Customer[] = [
 ];
 
 export const supplierPaymentDetails: PaymentDetail[] = [
-    { id: '1', partyId: 'SUP001', partyName: 'Koyambedu Market', totalAmount: 50000, paidAmount: 45000, dueAmount: 5000 },
-    { id: '2', partyId: 'SUP002', partyName: 'Ooty Farms', totalAmount: 75000, paidAmount: 75000, dueAmount: 0 },
-    { id: '3', partyId: 'SUP003', partyName: 'Local Farmers Co-op', totalAmount: 22000, paidAmount: 10000, dueAmount: 12000 },
+    { id: '1', partyId: 'SUP001', partyName: 'Koyambedu Market', totalAmount: 50000, paidAmount: 45000, dueAmount: 5000, paymentMethod: 'Credit' },
+    { id: '2', partyId: 'SUP002', partyName: 'Ooty Farms', totalAmount: 75000, paidAmount: 75000, dueAmount: 0, paymentMethod: 'Cash' },
+    { id: '3', partyId: 'SUP003', partyName: 'Local Farmers Co-op', totalAmount: 22000, paidAmount: 10000, dueAmount: 12000, paymentMethod: 'Credit' },
 ];
 
 export const customerPaymentDetails: PaymentDetail[] = [
-    { id: '1', partyId: 'CUS001', partyName: 'Venkatesh', totalAmount: 1250, paidAmount: 1250, dueAmount: 0 },
-    { id: '2', partyId: 'CUS003', partyName: 'Anbu Retail', totalAmount: 8400, paidAmount: 5000, dueAmount: 3400 },
-    { id: '3', partyId: 'CUS004', partyName: 'Kannan Stores', totalAmount: 550, paidAmount: 550, dueAmount: 0 },
+    { id: '1', partyId: 'CUS001', partyName: 'Venkatesh', totalAmount: 1250, paidAmount: 1250, dueAmount: 0, paymentMethod: 'UPI/Digital' },
+    { id: '2', partyId: 'CUS003', partyName: 'Anbu Retail', totalAmount: 8400, paidAmount: 5000, dueAmount: 3400, paymentMethod: 'Credit' },
+    { id: '3', partyId: 'CUS004', partyName: 'Kannan Stores', totalAmount: 550, paidAmount: 550, dueAmount: 0, paymentMethod: 'Cash' },
 ];

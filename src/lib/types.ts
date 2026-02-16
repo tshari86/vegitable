@@ -21,14 +21,18 @@ export type Customer = {
     address: string;
 };
 
+export type LineItem = {
+    itemName: string;
+    price: number;
+    quantity: number;
+};
+
 export type Purchase = {
     id: string;
     date: string;
     supplierId: string;
     supplierName: string;
-    itemName: string;
-    price: number;
-    quantity: number;
+    items: LineItem[];
     paymentMethod: 'Cash' | 'UPI/Digital' | 'Credit';
     totalAmount: number;
 };
@@ -38,9 +42,7 @@ export type Sale = {
     date: string;
     customerId: string;
     customerName: string;
-    itemName: string;
-    price: number;
-    quantity: number;
+    items: LineItem[];
     paymentMethod: 'Cash' | 'UPI/Digital' | 'Credit';
     totalAmount: number;
 };
@@ -52,4 +54,5 @@ export type PaymentDetail = {
     totalAmount: number;
     paidAmount: number;
     dueAmount: number;
+    paymentMethod?: string;
 }

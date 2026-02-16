@@ -1,3 +1,6 @@
+
+"use client";
+
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,21 +25,33 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Edit, MoreHorizontal, PlusCircle, Trash } from "lucide-react";
+import { Download, Edit, MoreHorizontal, PlusCircle } from "lucide-react";
 import { suppliers, supplierPaymentDetails } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
 import { AddPurchaseDialog } from "@/components/purchase/add-purchase-dialog";
+import { useState } from "react";
+import type { PaymentDetail } from "@/lib/types";
+import { EditPaymentDialog } from "@/components/purchase/edit-payment-dialog";
+
 
 export default function PurchasePage() {
+    const [editPayment, setEditPayment] = useState<PaymentDetail | null>(null);
+
   return (
     <>
       <Header title="Purchase Management">
-        <AddPurchaseDialog>
-          <Button size="sm" className="gap-1">
-            <PlusCircle className="h-4 w-4" />
-            Add Purchase
-          </Button>
-        </AddPurchaseDialog>
+        <div className="flex items-center gap-2">
+            <AddPurchaseDialog>
+            <Button size="sm" className="gap-1">
+                <PlusCircle className="h-4 w-4" />
+                Add Purchase
+            </Button>
+            </AddPurchaseDialog>
+            <Button size="sm" variant="outline" className="gap-1">
+                <Download className="h-4 w-4" />
+                Export CSV
+            </Button>
+        </div>
       </Header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
         <div className="grid gap-4 md:gap-8">
@@ -72,16 +87,15 @@ export default function PurchasePage() {
                           <DropdownMenuTrigger asChild>
                             <Button
                               aria-haspopup="true"
-                              size="icon"
+                              size="sm"
                               variant="ghost"
                             >
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
+                                Actions
+                              <MoreHorizontal className="h-4 w-4 ml-2" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem><Edit className="h-4 w-4 mr-2" /> Edit</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive focus:text-destructive"><Trash className="h-4 w-4 mr-2" /> Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -105,6 +119,7 @@ export default function PurchasePage() {
                   <TableRow>
                     <TableHead>Supplier ID</TableHead>
                     <TableHead>Supplier Name</TableHead>
+                    <TableHead>Payment Method</TableHead>
                     <TableHead className="text-right">Total Amount</TableHead>
                     <TableHead className="text-right">Paid Amount</TableHead>
                     <TableHead className="text-right">Due Amount</TableHead>
@@ -120,6 +135,7 @@ export default function PurchasePage() {
                         {payment.partyId}
                       </TableCell>
                       <TableCell>{payment.partyName}</TableCell>
+                      <TableCell>{payment.paymentMethod}</TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(payment.totalAmount)}
                       </TableCell>
@@ -144,7 +160,9 @@ export default function PurchasePage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem><Edit className="h-4 w-4 mr-2" /> Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setEditPayment(payment)}>
+                                <Edit className="h-4 w-4 mr-2" /> Edit
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -155,6 +173,12 @@ export default function PurchasePage() {
             </CardContent>
           </Card>
         </div>
+        <EditPaymentDialog 
+            payment={editPayment}
+            open={!!editPayment}
+            onOpenChange={(open) => !open && setEditPayment(null)}
+            onSave={(values) => console.log(values)}
+        />
       </main>
     </>
   );

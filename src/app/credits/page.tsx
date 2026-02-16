@@ -1,3 +1,5 @@
+
+"use client";
 import Header from "@/components/layout/header";
 import {
   Card,
@@ -22,15 +24,41 @@ import {
 } from "@/components/ui/tabs";
 import { customerPaymentDetails, supplierPaymentDetails } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Download, Search } from "lucide-react";
 
 export default function CreditsPage() {
-  const supplierCredits = supplierPaymentDetails.filter(p => p.dueAmount > 0);
-  const customerCredits = customerPaymentDetails.filter(p => p.dueAmount > 0);
+  const [search, setSearch] = useState("");
+
+  const filteredSupplierCredits = supplierPaymentDetails
+    .filter(p => p.dueAmount > 0)
+    .filter(p => p.partyName.toLowerCase().includes(search.toLowerCase()));
+  
+  const filteredCustomerCredits = customerPaymentDetails
+    .filter(p => p.dueAmount > 0)
+    .filter(p => p.partyName.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <>
-      <Header title="Credit Management" />
+      <Header title="Credit Management">
+        <Button size="sm" variant="outline" className="gap-1">
+            <Download className="h-4 w-4" />
+            Export CSV
+        </Button>
+      </Header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
+        <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+                type="search"
+                placeholder="Search by party name..."
+                className="pl-8 sm:w-[300px]"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+            />
+        </div>
         <Tabs defaultValue="customer">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="customer">Customer Credits</TabsTrigger>
@@ -56,7 +84,7 @@ export default function CreditsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {customerCredits.map((payment) => (
+                    {filteredCustomerCredits.map((payment) => (
                       <TableRow key={payment.id}>
                         <TableCell>{payment.partyId}</TableCell>
                         <TableCell>{payment.partyName}</TableCell>
@@ -90,7 +118,7 @@ export default function CreditsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {supplierCredits.map((payment) => (
+                    {filteredSupplierCredits.map((payment) => (
                       <TableRow key={payment.id}>
                         <TableCell>{payment.partyId}</TableCell>
                         <TableCell>{payment.partyName}</TableCell>

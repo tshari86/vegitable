@@ -1,3 +1,5 @@
+
+'use client';
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Filter } from "lucide-react";
+import { Calendar as CalendarIcon, Filter, Download } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +42,12 @@ const reportData = [
 export default function ReportsPage() {
   return (
     <>
-      <Header title="Transaction Report" />
+      <Header title="Transaction Report">
+        <Button size="sm" variant="outline" className="gap-1">
+            <Download className="h-4 w-4" />
+            Export CSV
+        </Button>
+      </Header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
         <Card>
           <CardHeader>
@@ -55,7 +62,7 @@ export default function ReportsPage() {
                     <PopoverTrigger asChild>
                     <Button
                         variant={"outline"}
-                        className="w-[240px] justify-start text-left font-normal"
+                        className="w-full md:w-[240px] justify-start text-left font-normal"
                     >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         <span>Pick a date range</span>
@@ -76,6 +83,16 @@ export default function ReportsPage() {
                         <SelectItem value="all">All Parties</SelectItem>
                         <SelectItem value="venkatesh">Venkatesh</SelectItem>
                         <SelectItem value="koyambedu">Koyambedu Market</SelectItem>
+                    </SelectContent>
+                </Select>
+                 <Select>
+                    <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectValue placeholder="Filter by Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="Sale">Sale</SelectItem>
+                        <SelectItem value="Purchase">Purchase</SelectItem>
                     </SelectContent>
                 </Select>
                 <Button className="w-full md:w-auto gap-2">
