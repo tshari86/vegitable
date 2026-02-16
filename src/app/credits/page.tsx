@@ -49,10 +49,10 @@ export default function CreditsPage() {
 
     if (activeTab === 'customer') {
         dataToExport = filteredCustomerCredits;
-        filename = 'customer_credits.csv';
+        filename = 'sales_credits.csv';
     } else {
         dataToExport = filteredSupplierCredits;
-        filename = 'supplier_credits.csv';
+        filename = 'purchase_credits.csv';
     }
 
     const totalRow = dataToExport.reduce((acc, curr) => {
@@ -94,13 +94,13 @@ export default function CreditsPage() {
         </div>
         <Tabs defaultValue="customer" onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="customer">Customer Credits</TabsTrigger>
-            <TabsTrigger value="supplier">Supplier Credits</TabsTrigger>
+            <TabsTrigger value="customer">Sales</TabsTrigger>
+            <TabsTrigger value="supplier">Purchase</TabsTrigger>
           </TabsList>
           <TabsContent value="customer">
             <Card>
               <CardHeader>
-                <CardTitle>Customer Credits</CardTitle>
+                <CardTitle>Sales</CardTitle>
                 <CardDescription>
                   Outstanding payments to be received from customers.
                 </CardDescription>
@@ -134,7 +134,7 @@ export default function CreditsPage() {
           <TabsContent value="supplier">
             <Card>
               <CardHeader>
-                <CardTitle>Supplier Credits</CardTitle>
+                <CardTitle>Purchase</CardTitle>
                 <CardDescription>
                   Outstanding payments to be made to suppliers.
                 </CardDescription>

@@ -1,5 +1,8 @@
 
 'use client';
+import { useState } from "react";
+import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,16 +30,58 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarIcon, Filter, Download } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { downloadCsv, formatCurrency } from "@/lib/utils";
+import { downloadCsv, formatCurrency, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useTransactions } from "@/context/transaction-provider";
 import type { Transaction } from "@/lib/types";
 
 export default function ReportsPage() {
-    const { transactions } = useTransactions();
+    const { transactions, customers, suppliers } = useTransactions();
+    
+    const allParties = [
+        ...customers.map(c => c.name),
+        ...suppliers.map(s => s.name)
+    ];
+    const uniqueParties = [...new Set(allParties)];
+
+    const [date, setDate] = useState<DateRange | undefined>();
+    const [party, setParty] = useState('all');
+    const [type, setType] = useState('all');
+    const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>(transactions);
+
+    const handleGenerateReport = () => {
+        let newFilteredTransactions = transactions;
+
+        if (date?.from) {
+            newFilteredTransactions = newFilteredTransactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                transactionDate.setHours(0, 0, 0, 0); 
+                
+                const fromDate = new Date(date.from!);
+                fromDate.setHours(0, 0, 0, 0);
+
+                if (date.to) {
+                    const toDate = new Date(date.to);
+                    toDate.setHours(0, 0, 0, 0);
+                    return transactionDate >= fromDate && transactionDate <= toDate;
+                }
+                return transactionDate.getTime() === fromDate.getTime();
+            });
+        }
+
+        if (party !== 'all') {
+            newFilteredTransactions = newFilteredTransactions.filter(t => t.party === party);
+        }
+
+        if (type !== 'all') {
+            newFilteredTransactions = newFilteredTransactions.filter(t => t.type === type);
+        }
+        setFilteredTransactions(newFilteredTransactions);
+    };
+
 
     const handleExport = () => {
-        const dataToExport = [...transactions];
+        const dataToExport = [...filteredTransactions];
         const totalAmount = dataToExport.reduce((acc, curr) => acc + curr.amount, 0);
         const totalRow = {
             id: 'TOTAL',
@@ -47,7 +92,7 @@ export default function ReportsPage() {
             amount: totalAmount,
             payment: '',
         };
-        downloadCsv([...dataToExport, totalRow as Transaction], "transactions.csv");
+        downloadCsv([...dataToExport.map(t => ({...t, date: format(new Date(t.date), "yyyy-MM-dd")})), totalRow as any], "transactions_report.csv");
     }
   return (
     <>
@@ -70,31 +115,51 @@ export default function ReportsPage() {
                 <Popover>
                     <PopoverTrigger asChild>
                     <Button
+                        id="date"
                         variant={"outline"}
-                        className="w-full md:w-[240px] justify-start text-left font-normal"
+                        className={cn(
+                          "w-full md:w-[300px] justify-start text-left font-normal",
+                          !date && "text-muted-foreground"
+                        )}
                     >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        <span>Pick a date range</span>
+                        {date?.from ? (
+                            date.to ? (
+                                <>
+                                    {format(date.from, "LLL dd, y")} -{" "}
+                                    {format(date.to, "LLL dd, y")}
+                                </>
+                            ) : (
+                                format(date.from, "LLL dd, y")
+                            )
+                        ) : (
+                            <span>Pick a date range</span>
+                        )}
                     </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
+                        initialFocus
                         mode="range"
+                        defaultMonth={date?.from}
+                        selected={date}
+                        onSelect={setDate}
                         numberOfMonths={2}
                     />
                     </PopoverContent>
                 </Popover>
-                <Select>
+                <Select value={party} onValueChange={setParty}>
                     <SelectTrigger className="w-full md:w-[240px]">
                         <SelectValue placeholder="Filter by Party" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Parties</SelectItem>
-                        <SelectItem value="venkatesh">Venkatesh</SelectItem>
-                        <SelectItem value="koyambedu">Koyambedu Market</SelectItem>
+                        {uniqueParties.map((p) => (
+                           <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
-                 <Select>
+                 <Select value={type} onValueChange={setType}>
                     <SelectTrigger className="w-full md:w-[180px]">
                         <SelectValue placeholder="Filter by Type" />
                     </SelectTrigger>
@@ -104,7 +169,7 @@ export default function ReportsPage() {
                         <SelectItem value="Purchase">Purchase</SelectItem>
                     </SelectContent>
                 </Select>
-                <Button className="w-full md:w-auto gap-2">
+                <Button className="w-full md:w-auto gap-2" onClick={handleGenerateReport}>
                     <Filter className="h-4 w-4" />
                     Generate
                 </Button>
@@ -122,9 +187,9 @@ export default function ReportsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions.map((row) => (
+                {filteredTransactions.map((row) => (
                     <TableRow key={row.id}>
-                        <TableCell>{row.date}</TableCell>
+                        <TableCell>{format(new Date(row.date), "PPP")}</TableCell>
                         <TableCell>{row.party}</TableCell>
                         <TableCell>
                             <Badge variant={row.type === 'Sale' ? 'default' : 'secondary'} className={row.type === 'Sale' ? 'bg-primary/80' : ''}>{row.type}</Badge>
