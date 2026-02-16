@@ -1,20 +1,14 @@
+
 "use client"
 
+import { useEffect, useState } from "react"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
 import {
   ChartContainer,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import { Skeleton } from "@/components/ui/skeleton"
 
-const data = [
-  { date: "Mon", sales: Math.floor(Math.random() * 2000) + 1000 },
-  { date: "Tue", sales: Math.floor(Math.random() * 2000) + 1000 },
-  { date: "Wed", sales: Math.floor(Math.random() * 2000) + 1000 },
-  { date: "Thu", sales: Math.floor(Math.random() * 2000) + 1000 },
-  { date: "Fri", sales: Math.floor(Math.random() * 2000) + 1000 },
-  { date: "Sat", sales: Math.floor(Math.random() * 2000) + 1000 },
-  { date: "Sun", sales: Math.floor(Math.random() * 2000) + 1000 },
-]
 
 const chartConfig = {
   sales: {
@@ -24,6 +18,28 @@ const chartConfig = {
 }
 
 export function RecentSalesChart() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // This runs only on the client, after hydration
+    const generateData = () => [
+        { date: "Mon", sales: Math.floor(Math.random() * 2000) + 1000 },
+        { date: "Tue", sales: Math.floor(Math.random() * 2000) + 1000 },
+        { date: "Wed", sales: Math.floor(Math.random() * 2000) + 1000 },
+        { date: "Thu", sales: Math.floor(Math.random() * 2000) + 1000 },
+        { date: "Fri", sales: Math.floor(Math.random() * 2000) + 1000 },
+        { date: "Sat", sales: Math.floor(Math.random() * 2000) + 1000 },
+        { date: "Sun", sales: Math.floor(Math.random() * 2000) + 1000 },
+    ];
+    setData(generateData());
+    setLoading(false);
+  }, []);
+
+  if (loading) {
+    return <Skeleton className="h-[250px] w-full" />;
+  }
+
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
       <ResponsiveContainer width="100%" height={250}>
