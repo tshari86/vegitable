@@ -27,9 +27,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils";
 import {
-  Carrot,
   CreditCard,
-  LayoutDashboard,
   Leaf,
   LineChart,
   LogOut,
@@ -42,9 +40,6 @@ import {
 
 
 const menuItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/vegetable-intake', label: 'Vegetable Intake', icon: Carrot },
-    { href: '/sales', label: 'Sales', icon: ShoppingCart },
     { href: '/purchase', label: 'Purchase', icon: Truck },
     { href: '/sales-old', label: 'Sales Old', icon: ShoppingCart },
     { href: '/products', label: 'Products', icon: Package },
