@@ -30,14 +30,14 @@ import {
 
 
 const menuItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LineChart },
-    { href: '/vegetable-intake', label: 'Vegetable Intake', icon: Leaf },
-    { href: '/sales', label: 'Sales', icon: ShoppingCart },
-    { href: '/credits', label: 'Payments', icon: CreditCard },
-    { href: '/purchase/suppliers', label: 'Supplier', icon: Users },
-    { href: '/sales/customers', label: 'Buyer', icon: User },
-    { href: '/settings', label: 'Accounts', icon: BookUser },
-    { href: '#', label: 'Log out', icon: LogOut },
+    { href: '/dashboard', label: 'Dashboard', icon: LineChart, key: 'dashboard' },
+    { href: '/vegetable-intake', label: 'Vegetable Intake', icon: Leaf, key: 'vegetable-intake' },
+    { href: '/sales', label: 'Sales', icon: ShoppingCart, key: 'sales' },
+    { href: '/credits', label: 'Payments', icon: CreditCard, key: 'credits' },
+    { href: '/purchase/suppliers', label: 'Supplier', icon: Users, key: 'suppliers' },
+    { href: '/sales/customers', label: 'Buyer', icon: User, key: 'customers' },
+    { href: '/settings', label: 'Accounts', icon: BookUser, key: 'settings' },
+    { href: '/login', label: 'Log out', icon: LogOut, key: 'logout' },
 ]
 
 export function SidebarNav() {
@@ -47,7 +47,7 @@ export function SidebarNav() {
         if (href === '/dashboard') {
             return currentPathname === '/dashboard' || currentPathname === '/';
         }
-        if (href === '#') {
+        if (href === '#' || href === '/login') {
             return false;
         }
         return currentPathname.startsWith(href);
@@ -69,7 +69,7 @@ export function SidebarNav() {
             <SidebarContent className="p-2">
                 <SidebarMenu>
                     {menuItems.map((item) => (
-                         <SidebarMenuItem key={item.href}>
+                         <SidebarMenuItem key={item.key}>
                             <SidebarMenuButton
                                 asChild
                                 isActive={getIsActive(item.href, pathname)}

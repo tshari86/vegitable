@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Sidebar, SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
-import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { TransactionProvider } from '@/context/transaction-provider';
+import { AppShell } from '@/components/layout/app-shell';
 
 export const metadata: Metadata = {
   title: 'OM Saravana Billing',
@@ -24,12 +23,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <TransactionProvider>
-          <SidebarProvider>
-            <Sidebar>
-              <SidebarNav />
-            </Sidebar>
-            <SidebarInset>{children}</SidebarInset>
-          </SidebarProvider>
+          <AppShell>{children}</AppShell>
         </TransactionProvider>
         <Toaster />
       </body>
