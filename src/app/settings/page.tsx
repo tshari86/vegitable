@@ -130,10 +130,10 @@ export default function AccountsPage() {
             <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6 bg-background">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <DefaultSummaryCard title="Opening Balance">
-                        <Input type="number" placeholder="₹ 0" />
+                        <Input type="number" placeholder="0" />
                     </DefaultSummaryCard>
                     <DefaultSummaryCard title="Total Expenses">
-                        <Input type="number" placeholder="₹ 0" />
+                        <Input type="number" placeholder="0" />
                     </DefaultSummaryCard>
                 </div>
 
@@ -203,35 +203,35 @@ export default function AccountsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <SummaryCard title="Final Summary" titleClassName="bg-primary" titleTextClassName="text-primary-foreground">
                         <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span>Opening Balance / Debit</span><span>₹0</span></div>
+                            <div className="flex justify-between"><span>Opening Balance / Debit</span><span>0</span></div>
                              <p className="font-semibold text-primary">Credits</p>
-                             <div className="flex justify-between pl-4"><span>Ready Cash</span><span>₹0</span></div>
+                             <div className="flex justify-between pl-4"><span>Ready Cash</span><span>0</span></div>
                              <div className="flex justify-between pl-4"><span>Money In</span><span>{formatCurrency(totalSales)}</span></div>
                              <p className="font-semibold text-destructive">Debit</p>
                              <div className="flex justify-between pl-4"><span>Money Out</span><span>{formatCurrency(totalPurchases)}</span></div>
-                             <div className="flex justify-between pl-4"><span>Total Expenses</span><span>₹0</span></div>
+                             <div className="flex justify-between pl-4"><span>Total Expenses</span><span>0</span></div>
                              <hr className="my-2"/>
-                            <div className="flex justify-between font-bold"><span>Closing Balance</span><span>₹0</span></div>
+                            <div className="flex justify-between font-bold"><span>Closing Balance</span><span>0</span></div>
                         </div>
                     </SummaryCard>
 
                     <SummaryCard title="Sales Summary" titleClassName="bg-accent" titleTextClassName="text-accent-foreground">
                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span>Ready Cash</span><span>₹0</span></div>
-                            <div className="flex justify-between"><span>GPay</span><span>₹0</span></div>
-                            <div className="flex justify-between"><span>Credit</span><span>₹2000</span></div>
+                            <div className="flex justify-between"><span>Ready Cash</span><span>0</span></div>
+                            <div className="flex justify-between"><span>GPay</span><span>0</span></div>
+                            <div className="flex justify-between"><span>Credit</span><span>2000</span></div>
                             <hr className="my-2 border-accent-foreground/20"/>
-                            <div className="flex justify-between font-bold"><span>Total Sales</span><span>₹0</span></div>
-                             <div className="flex justify-between text-destructive"><span>Discount</span><span>₹0</span></div>
+                            <div className="flex justify-between font-bold"><span>Total Sales</span><span>0</span></div>
+                             <div className="flex justify-between text-destructive"><span>Discount</span><span>0</span></div>
                         </div>
                     </SummaryCard>
 
                     <SummaryCard title="Salesman Based Sales" titleClassName="bg-accent" titleTextClassName="text-accent-foreground">
                         <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div className="flex justify-between border-b pb-1 border-accent-foreground/20"><span>1. Salesman 1</span><span>₹ 0.00</span></div>
-                            <div className="flex justify-between border-b pb-1 border-accent-foreground/20"><span>2. Salesman 2</span><span>₹ 0.00</span></div>
-                            <div className="flex justify-between border-b pb-1 border-accent-foreground/20"><span>3. Salesman 3</span><span>₹ 0.00</span></div>
-                            <div className="flex justify-between border-b pb-1 border-accent-foreground/20"><span>4. Salesman 4</span><span>₹ 0.00</span></div>
+                            <div className="flex justify-between border-b pb-1 border-accent-foreground/20"><span>1. Salesman 1</span><span>0.00</span></div>
+                            <div className="flex justify-between border-b pb-1 border-accent-foreground/20"><span>2. Salesman 2</span><span>0.00</span></div>
+                            <div className="flex justify-between border-b pb-1 border-accent-foreground/20"><span>3. Salesman 3</span><span>0.00</span></div>
+                            <div className="flex justify-between border-b pb-1 border-accent-foreground/20"><span>4. Salesman 4</span><span>0.00</span></div>
                         </div>
                     </SummaryCard>
                 </div>
