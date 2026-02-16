@@ -13,7 +13,10 @@ import {
 
 interface TransactionContextType {
     transactions: Transaction[];
-    addTransaction: (transactions: Omit<Transaction, 'id'>[]) => void;
+    addTransaction: (
+        transactions: Omit<Transaction, 'id'>[],
+        partyDetails: { name: string; contact: string; address: string }
+    ) => void;
     supplierPayments: PaymentDetail[];
     customerPayments: PaymentDetail[];
     updateSupplierPayment: (payment: PaymentDetail) => void;
@@ -27,97 +30,208 @@ interface TransactionContextType {
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
 export function TransactionProvider({ children }: { children: React.ReactNode }) {
-    const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
-    const [supplierPayments, setSupplierPayments] = useState<PaymentDetail[]>(initialSupplierPaymentDetails);
-    const [customerPayments, setCustomerPayments] = useState<PaymentDetail[]>(initialCustomerPaymentDetails);
-    const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
-    const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
-
-    useEffect(() => {
-        if (isClient) {
+    const [transactions, setTransactions] = useState<Transaction[]>(() => {
+        if (typeof window !== 'undefined') {
             try {
-                const storedTransactions = window.localStorage.getItem('transactions');
-                if (storedTransactions) setTransactions(JSON.parse(storedTransactions));
+                const stored = window.localStorage.getItem('transactions');
+                return stored ? JSON.parse(stored) : initialTransactions;
+            } catch (error) {
+                console.error("Failed to load transactions from localStorage", error);
+            }
+        }
+        return initialTransactions;
+    });
 
-                const storedSupplierPayments = window.localStorage.getItem('supplierPayments');
-                if (storedSupplierPayments) setSupplierPayments(JSON.parse(storedSupplierPayments));
+    const [supplierPayments, setSupplierPayments] = useState<PaymentDetail[]>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const stored = window.localStorage.getItem('supplierPayments');
+                return stored ? JSON.parse(stored) : initialSupplierPaymentDetails;
+            } catch (error) {
+                console.error("Failed to load supplierPayments from localStorage", error);
+            }
+        }
+        return initialSupplierPaymentDetails;
+    });
+
+    const [customerPayments, setCustomerPayments] = useState<PaymentDetail[]>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const stored = window.localStorage.getItem('customerPayments');
+                return stored ? JSON.parse(stored) : initialCustomerPaymentDetails;
+            } catch (error) {
+                console.error("Failed to load customerPayments from localStorage", error);
+            }
+        }
+        return initialCustomerPaymentDetails;
+    });
+
+    const [suppliers, setSuppliers] = useState<Supplier[]>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const stored = window.localStorage.getItem('suppliers');
+                return stored ? JSON.parse(stored) : initialSuppliers;
+            } catch (error) {
+                console.error("Failed to load suppliers from localStorage", error);
+            }
+        }
+        return initialSuppliers;
+    });
+
+    const [customers, setCustomers] = useState<Customer[]>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const stored = window.localStorage.getItem('customers');
+                return stored ? JSON.parse(stored) : initialCustomers;
+            } catch (error) {
+                console.error("Failed to load customers from localStorage", error);
+            }
+        }
+        return initialCustomers;
+    });
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem('transactions', JSON.stringify(transactions));
+        } catch (error) {
+            console.error('Error writing to localStorage for key "transactions":', error);
+        }
+    }, [transactions]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem('supplierPayments', JSON.stringify(supplierPayments));
+        } catch (error) {
+            console.error('Error writing to localStorage for key "supplierPayments":', error);
+        }
+    }, [supplierPayments]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem('customerPayments', JSON.stringify(customerPayments));
+        } catch (error) {
+            console.error('Error writing to localStorage for key "customerPayments":', error);
+        }
+    }, [customerPayments]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem('suppliers', JSON.stringify(suppliers));
+        } catch (error) {
+            console.error('Error writing to localStorage for key "suppliers":', error);
+        }
+    }, [suppliers]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem('customers', JSON.stringify(customers));
+        } catch (error) {
+            console.error('Error writing to localStorage for key "customers":', error);
+        }
+    }, [customers]);
+
+
+    const addTransaction = (
+        newTransactions: Omit<Transaction, 'id'>[],
+        partyDetails: { name: string; contact: string; address: string }
+    ) => {
+        setTransactions(prev => {
+            const newId = (prev.length > 0 ? Math.max(...prev.map(p => p.id)) : 0) + 1;
+            const newTrans = [
+                ...prev, 
+                ...newTransactions.map((t, i) => ({...t, id: newId + i}))
+            ];
+            return newTrans;
+        });
+
+        if (newTransactions.length === 0) return;
+
+        const totalAmount = newTransactions.reduce((sum, t) => sum + t.amount, 0);
+        const transactionType = newTransactions[0].type;
+        const paymentMethod = newTransactions[0].payment;
+        const partyName = partyDetails.name;
+
+        if (transactionType === 'Sale') {
+            let customer = customers.find(c => c.name.toLowerCase() === partyName.toLowerCase());
+            if (!customer) {
+                const newCustomerId = `CUS${(customers.length + 1).toString().padStart(3, '0')}`;
+                customer = {
+                    id: newCustomerId,
+                    name: partyDetails.name,
+                    contact: partyDetails.contact,
+                    address: partyDetails.address
+                };
+                setCustomers(prev => [...prev, customer!]);
+            }
+    
+            setCustomerPayments(prev => {
+                const updatedPayments = [...prev];
+                const existingPaymentIndex = updatedPayments.findIndex(p => p.partyId === customer!.id);
                 
-                const storedCustomerPayments = window.localStorage.getItem('customerPayments');
-                if (storedCustomerPayments) setCustomerPayments(JSON.parse(storedCustomerPayments));
-
-                const storedSuppliers = window.localStorage.getItem('suppliers');
-                if (storedSuppliers) setSuppliers(JSON.parse(storedSuppliers));
-                
-                const storedCustomers = window.localStorage.getItem('customers');
-                if (storedCustomers) setCustomers(JSON.parse(storedCustomers));
-
-            } catch (error) {
-                console.error("Failed to load from localStorage", error);
+                if (existingPaymentIndex > -1) {
+                    const existingPayment = updatedPayments[existingPaymentIndex];
+                    existingPayment.totalAmount += totalAmount;
+                    if (paymentMethod !== 'Credit') {
+                        existingPayment.paidAmount += totalAmount;
+                    }
+                    existingPayment.dueAmount = existingPayment.totalAmount - existingPayment.paidAmount;
+                    if (existingPayment.dueAmount < 0) existingPayment.dueAmount = 0;
+                    existingPayment.paymentMethod = paymentMethod;
+    
+                    return updatedPayments;
+                } else {
+                    const newPaymentId = (Math.max(0, ...prev.map(p => parseInt(p.id) || 0)) + 1).toString();
+                    const newPayment = {
+                        id: newPaymentId,
+                        partyId: customer!.id,
+                        partyName: customer!.name,
+                        totalAmount: totalAmount,
+                        paidAmount: paymentMethod !== 'Credit' ? totalAmount : 0,
+                        dueAmount: paymentMethod === 'Credit' ? totalAmount : 0,
+                        paymentMethod: paymentMethod,
+                    };
+                    return [...prev, newPayment];
+                }
+            });
+        } else { // Purchase
+            let supplier = suppliers.find(s => s.name.toLowerCase() === partyName.toLowerCase());
+            if (!supplier) {
+                const newSupplierId = `SUP${(suppliers.length + 1).toString().padStart(3, '0')}`;
+                supplier = {
+                    id: newSupplierId,
+                    name: partyDetails.name,
+                    contact: partyDetails.contact,
+                    address: partyDetails.address,
+                };
+                setSuppliers(prev => [...prev, supplier!]);
             }
+    
+            setSupplierPayments(prev => {
+                const updatedPayments = [...prev];
+                const existingPaymentIndex = updatedPayments.findIndex(p => p.partyId === supplier!.id);
+
+                if (existingPaymentIndex > -1) {
+                    const existingPayment = updatedPayments[existingPaymentIndex];
+                    existingPayment.totalAmount += totalAmount;
+                    existingPayment.dueAmount = existingPayment.totalAmount - existingPayment.paidAmount;
+                    existingPayment.paymentMethod = paymentMethod;
+    
+                    return updatedPayments;
+                } else {
+                    const newPaymentId = (Math.max(0, ...prev.map(p => parseInt(p.id) || 0)) + 1).toString();
+                     const newPayment = {
+                        id: newPaymentId,
+                        partyId: supplier!.id,
+                        partyName: supplier!.name,
+                        totalAmount: totalAmount,
+                        paidAmount: 0,
+                        dueAmount: totalAmount,
+                        paymentMethod: paymentMethod,
+                    };
+                    return [...prev, newPayment];
+                }
+            });
         }
-    }, [isClient]);
-
-    useEffect(() => {
-        if (isClient) {
-            try {
-                window.localStorage.setItem('transactions', JSON.stringify(transactions));
-            } catch (error) {
-                console.error('Error writing to localStorage for key "transactions":', error);
-            }
-        }
-    }, [transactions, isClient]);
-
-    useEffect(() => {
-        if (isClient) {
-            try {
-                window.localStorage.setItem('supplierPayments', JSON.stringify(supplierPayments));
-            } catch (error) {
-                console.error('Error writing to localStorage for key "supplierPayments":', error);
-            }
-        }
-    }, [supplierPayments, isClient]);
-
-    useEffect(() => {
-        if (isClient) {
-            try {
-                window.localStorage.setItem('customerPayments', JSON.stringify(customerPayments));
-            } catch (error) {
-                console.error('Error writing to localStorage for key "customerPayments":', error);
-            }
-        }
-    }, [customerPayments, isClient]);
-
-    useEffect(() => {
-        if (isClient) {
-            try {
-                window.localStorage.setItem('suppliers', JSON.stringify(suppliers));
-            } catch (error) {
-                console.error('Error writing to localStorage for key "suppliers":', error);
-            }
-        }
-    }, [suppliers, isClient]);
-
-    useEffect(() => {
-        if (isClient) {
-            try {
-                window.localStorage.setItem('customers', JSON.stringify(customers));
-            } catch (error) {
-                console.error('Error writing to localStorage for key "customers":', error);
-            }
-        }
-    }, [customers, isClient]);
-
-
-    const addTransaction = (newTransactions: Omit<Transaction, 'id'>[]) => {
-        setTransactions(prev => [
-            ...prev, 
-            ...newTransactions.map((t, i) => ({...t, id: (prev.length > 0 ? Math.max(...prev.map(p => p.id)) : 0) + i + 1}))
-        ]);
     };
 
     const updateSupplierPayment = (updatedPayment: PaymentDetail) => {

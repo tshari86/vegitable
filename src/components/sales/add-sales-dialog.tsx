@@ -79,7 +79,7 @@ export function AddSalesDialog({ children }: { children: React.ReactNode }) {
         amount: item.price * item.quantity,
         payment: data.paymentMethod,
     }));
-    addTransaction(newTransactions);
+    addTransaction(newTransactions, { name: data.customerName, contact: data.contact, address: data.address });
     setOpen(false);
     form.reset();
   }
