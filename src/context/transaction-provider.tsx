@@ -2,7 +2,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import type { Transaction, PaymentDetail, Supplier, Customer } from '@/lib/types';
+import type { Transaction, PaymentDetail, Supplier, Customer, DailyAccountSummary } from '@/lib/types';
 import { initialTransactions } from '@/lib/transactions';
 import { 
     initialSupplierPaymentDetails, 
@@ -27,6 +27,8 @@ interface TransactionContextType {
     updateSupplier: (supplier: Supplier) => void;
     customers: Customer[];
     updateCustomer: (customer: Customer) => void;
+    dailySummaries: DailyAccountSummary[];
+    saveDailySummary: (summary: DailyAccountSummary) => void;
 }
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
@@ -37,6 +39,7 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
     const [customerPayments, setCustomerPayments] = useState<PaymentDetail[]>(initialCustomerPaymentDetails);
     const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
     const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+    const [dailySummaries, setDailySummaries] = useState<DailyAccountSummary[]>([]);
 
      useEffect(() => {
         try {
@@ -54,6 +57,9 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
 
             const storedCustomers = window.localStorage.getItem('customers');
             if (storedCustomers) setCustomers(JSON.parse(storedCustomers));
+
+            const storedDailySummaries = window.localStorage.getItem('dailySummaries');
+            if (storedDailySummaries) setDailySummaries(JSON.parse(storedDailySummaries));
         } catch (error) {
             console.error("Failed to load from localStorage", error);
         }
@@ -99,6 +105,14 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
             console.error('Error writing to localStorage for key "customers":', error);
         }
     }, [customers]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem('dailySummaries', JSON.stringify(dailySummaries));
+        } catch (error) {
+            console.error('Error writing to localStorage for key "dailySummaries":', error);
+        }
+    }, [dailySummaries]);
 
 
     const addTransaction = (
@@ -210,31 +224,32 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
     };
 
     const addSupplier = (newSupplierData: Omit<Supplier, 'id'>) => {
-        if (suppliers.some(s => s.name.toLowerCase() === newSupplierData.name.toLowerCase())) {
-            return;
+        let supplier = suppliers.find(s => s.name.toLowerCase() === newSupplierData.name.toLowerCase());
+        if (!supplier) {
+            const newSupplierId = `SUP${(suppliers.length + 1).toString().padStart(3, '0')}`;
+            supplier = {
+                id: newSupplierId,
+                name: newSupplierData.name,
+                contact: newSupplierData.contact || '',
+                address: newSupplierData.address || '',
+            };
+            setSuppliers(prev => [...prev, supplier!]);
         }
         
-        const newSupplierId = `SUP${(suppliers.length + 1).toString().padStart(3, '0')}`;
-        const newSupplier: Supplier = {
-            id: newSupplierId,
-            name: newSupplierData.name,
-            contact: newSupplierData.contact || '',
-            address: newSupplierData.address || '',
-        };
-        
-        const newPaymentId = (Math.max(0, ...supplierPayments.map(p => parseInt(p.id) || 0)) + 1).toString();
-        const newPayment: PaymentDetail = {
-            id: newPaymentId,
-            partyId: newSupplier.id,
-            partyName: newSupplier.name,
-            totalAmount: 0,
-            paidAmount: 0,
-            dueAmount: 0,
-            paymentMethod: 'Credit',
-        };
-
-        setSuppliers(prev => [...prev, newSupplier]);
-        setSupplierPayments(prev => [...prev, newPayment]);
+        const supplierPaymentExists = supplierPayments.some(p => p.partyId === supplier!.id);
+        if (!supplierPaymentExists) {
+            const newPaymentId = (Math.max(0, ...supplierPayments.map(p => parseInt(p.id) || 0)) + 1).toString();
+            const newPayment: PaymentDetail = {
+                id: newPaymentId,
+                partyId: supplier!.id,
+                partyName: supplier!.name,
+                totalAmount: 0,
+                paidAmount: 0,
+                dueAmount: 0,
+                paymentMethod: 'Credit',
+            };
+            setSupplierPayments(prev => [...prev, newPayment]);
+        }
     };
 
     const updateSupplierPayment = (updatedPayment: PaymentDetail) => {
@@ -247,6 +262,7 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
 
     const updateSupplier = (updatedSupplier: Supplier) => {
         setSuppliers(prev => prev.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
+        setSupplierPayments(prev => prev.map(p => p.partyId === updatedSupplier.id ? {...p, partyName: updatedSupplier.name} : p));
     }
 
     const updateCustomer = (updatedCustomer: Customer) => {
@@ -254,9 +270,20 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
         setCustomerPayments(prev => prev.map(p => p.partyId === updatedCustomer.id ? {...p, partyName: updatedCustomer.name} : p));
     }
 
+    const saveDailySummary = (summary: DailyAccountSummary) => {
+        setDailySummaries(prev => {
+            const existingIndex = prev.findIndex(s => s.date === summary.date);
+            if (existingIndex > -1) {
+                const updated = [...prev];
+                updated[existingIndex] = summary;
+                return updated;
+            }
+            return [...prev, summary];
+        });
+    };
 
     return (
-        <TransactionContext.Provider value={{ transactions, addTransaction, supplierPayments, customerPayments, updateSupplierPayment, updateCustomerPayment, suppliers, addSupplier, updateSupplier, customers, updateCustomer }}>
+        <TransactionContext.Provider value={{ transactions, addTransaction, supplierPayments, customerPayments, updateSupplierPayment, updateCustomerPayment, suppliers, addSupplier, updateSupplier, customers, updateCustomer, dailySummaries, saveDailySummary }}>
             {children}
         </TransactionContext.Provider>
     );

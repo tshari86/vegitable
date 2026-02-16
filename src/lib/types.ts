@@ -66,3 +66,10 @@ export type Transaction = {
     amount: number;
     payment: string;
 }
+
+export type DailyAccountSummary = {
+    date: string;
+    openingBalance: number;
+    totalExpenses: number;
+    finalNote: string;
+};

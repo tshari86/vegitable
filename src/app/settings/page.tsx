@@ -11,12 +11,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useTransactions } from '@/context/transaction-provider';
 import { BuyersLedgerDialog } from '@/components/settings/buyers-ledger-dialog';
 import { SupplierLedgerDialog } from '@/components/settings/supplier-ledger-dialog';
+import { useToast } from '@/hooks/use-toast';
+import type { DailyAccountSummary } from '@/lib/types';
 
 
 const SummaryCard = ({ title, titleClassName, titleTextClassName, children }: { title: string, titleClassName?: string, titleTextClassName?: string, children: React.ReactNode }) => (
@@ -47,7 +49,27 @@ export default function AccountsPage() {
     const [activeDate, setActiveDate] = useState<Date | undefined>(new Date());
     const [isBuyerLedgerOpen, setIsBuyerLedgerOpen] = useState(false);
     const [isSupplierLedgerOpen, setIsSupplierLedgerOpen] = useState(false);
-    const { transactions } = useTransactions();
+    const { transactions, dailySummaries, saveDailySummary } = useTransactions();
+    const { toast } = useToast();
+
+    const [openingBalance, setOpeningBalance] = useState(0);
+    const [totalExpenses, setTotalExpenses] = useState(0);
+    const [finalNote, setFinalNote] = useState('');
+
+    useEffect(() => {
+        if (activeDate) {
+            const summaryForDate = dailySummaries.find(s => s.date === format(activeDate, 'yyyy-MM-dd'));
+            if (summaryForDate) {
+                setOpeningBalance(summaryForDate.openingBalance);
+                setTotalExpenses(summaryForDate.totalExpenses);
+                setFinalNote(summaryForDate.finalNote);
+            } else {
+                setOpeningBalance(0);
+                setTotalExpenses(0);
+                setFinalNote('');
+            }
+        }
+    }, [activeDate, dailySummaries]);
 
     const { dailySales, totalSales } = useMemo(() => {
         if (!activeDate) return { dailySales: [], totalSales: 0 };
@@ -97,6 +119,33 @@ export default function AccountsPage() {
         setActiveDate(selectedDate);
     }
 
+    const closingBalance = useMemo(() => {
+        return openingBalance + totalSales - totalPurchases - totalExpenses;
+    }, [openingBalance, totalSales, totalPurchases, totalExpenses]);
+
+    const handleSave = () => {
+        if (!activeDate) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Please select a date first.",
+            });
+            return;
+        }
+
+        const summary: DailyAccountSummary = {
+            date: format(activeDate, 'yyyy-MM-dd'),
+            openingBalance,
+            totalExpenses,
+            finalNote,
+        };
+        saveDailySummary(summary);
+        toast({
+            title: "Success",
+            description: "Account summary has been saved.",
+        });
+    };
+
 
     return (
         <>
@@ -130,10 +179,20 @@ export default function AccountsPage() {
             <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6 bg-background">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <DefaultSummaryCard title="Opening Balance">
-                        <Input type="number" placeholder="0" />
+                        <Input
+                            type="number"
+                            placeholder="0"
+                            value={openingBalance}
+                            onChange={(e) => setOpeningBalance(parseFloat(e.target.value) || 0)}
+                        />
                     </DefaultSummaryCard>
                     <DefaultSummaryCard title="Total Expenses">
-                        <Input type="number" placeholder="0" />
+                        <Input
+                            type="number"
+                            placeholder="0"
+                            value={totalExpenses}
+                            onChange={(e) => setTotalExpenses(parseFloat(e.target.value) || 0)}
+                        />
                     </DefaultSummaryCard>
                 </div>
 
@@ -203,15 +262,15 @@ export default function AccountsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <SummaryCard title="Final Summary" titleClassName="bg-primary" titleTextClassName="text-primary-foreground">
                         <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span>Opening Balance / Debit</span><span>0</span></div>
+                            <div className="flex justify-between"><span>Opening Balance / Debit</span><span>{formatCurrency(openingBalance)}</span></div>
                              <p className="font-semibold text-primary">Credits</p>
                              <div className="flex justify-between pl-4"><span>Ready Cash</span><span>0</span></div>
                              <div className="flex justify-between pl-4"><span>Money In</span><span>{formatCurrency(totalSales)}</span></div>
                              <p className="font-semibold text-destructive">Debit</p>
                              <div className="flex justify-between pl-4"><span>Money Out</span><span>{formatCurrency(totalPurchases)}</span></div>
-                             <div className="flex justify-between pl-4"><span>Total Expenses</span><span>0</span></div>
+                             <div className="flex justify-between pl-4"><span>Total Expenses</span><span>{formatCurrency(totalExpenses)}</span></div>
                              <hr className="my-2"/>
-                            <div className="flex justify-between font-bold"><span>Closing Balance</span><span>0</span></div>
+                            <div className="flex justify-between font-bold"><span>Closing Balance</span><span>{formatCurrency(closingBalance)}</span></div>
                         </div>
                     </SummaryCard>
 
@@ -241,13 +300,18 @@ export default function AccountsPage() {
                         <CardTitle className="text-base">Final Note</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Textarea id="final-note" placeholder="Enter any notes for the day..." />
+                        <Textarea 
+                            id="final-note"
+                            placeholder="Enter any notes for the day..."
+                            value={finalNote}
+                            onChange={(e) => setFinalNote(e.target.value)}
+                        />
                     </CardContent>
                 </Card>
 
                 
                 <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-4">
-                    <Button>Save</Button>
+                    <Button onClick={handleSave}>Save</Button>
                     <Button variant="outline" className="bg-accent hover:bg-accent/90 text-accent-foreground w-full md:w-auto" onClick={() => setIsSupplierLedgerOpen(true)}>Supplier Ledger</Button>
                     <Button variant="default" className="w-full md:w-auto" onClick={() => setIsBuyerLedgerOpen(true)}>Buyer's Ledger</Button>
                 </div>
