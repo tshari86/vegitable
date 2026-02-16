@@ -32,7 +32,7 @@ const menuItems = [
     { href: '/vegetable-intake', label: 'Vegetable Intake', icon: Leaf },
     { href: '/sales', label: 'Sales', icon: ShoppingCart },
     { href: '/credits', label: 'Payments', icon: CreditCard },
-    { href: '/sales/customers', label: 'Buyer', icon: Users },
+    { href: '/purchase/suppliers', label: 'Supplier', icon: Users },
     { href: '/settings', label: 'Accounts', icon: BookUser },
     { href: '#', label: 'Log out', icon: LogOut },
 ]
@@ -82,7 +82,7 @@ export function SidebarNav() {
                 </SidebarMenu>
             </SidebarContent>
             <SidebarFooter className="p-2 border-t">
-                <Button variant="ghost" className="w-full justify-start gap-2 px-2">
+                 <div className="hidden">
                     <Avatar className="h-8 w-8">
                         <AvatarImage src="https://picsum.photos/seed/1/100/100" alt="@owner" data-ai-hint="man portrait" />
                         <AvatarFallback>SO</AvatarFallback>
@@ -91,7 +91,7 @@ export function SidebarNav() {
                         <span className="text-sm font-medium">Shop Owner</span>
                         <span className="text-xs text-muted-foreground">owner@email.com</span>
                     </div>
-                </Button>
+                </div>
             </SidebarFooter>
         </>
     )
