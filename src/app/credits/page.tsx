@@ -1,4 +1,3 @@
-
 "use client";
 
 import Header from "@/components/layout/header";
@@ -23,17 +22,72 @@ const SupplierIcon = () => {
     )
 }
 
+const BuyerIcon = () => {
+    return (
+        <div className="h-20 w-20 flex items-center justify-center text-foreground">
+            <svg
+                viewBox="0 0 32 32"
+                className="h-full w-full"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                >
+                <path
+                    d="M16 11C17.6569 11 19 9.65685 19 8C19 6.34315 17.6569 5 16 5C14.3431 5 13 6.34315 13 8C13 9.65685 14.3431 11 16 11Z"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="1.5"
+                />
+                <path d="M16 11V20" stroke="hsl(var(--primary))" strokeWidth="1.5" />
+                <path d="M16 15L12 15" stroke="hsl(var(--primary))" strokeWidth="1.5" />
+                <path d="M16 15L20 15" stroke="hsl(var(--primary))" strokeWidth="1.5" />
+                
+                <path
+                    d="M12 15L10 24H4L6 15"
+                    stroke="hsl(var(--chart-4))"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                />
+                <path
+                    d="M8 12C9.10457 12 10 12.8954 10 14"
+                    stroke="hsl(var(--chart-4))"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                />
+                <path
+                    d="M20 15L22 24H28L26 15"
+                    stroke="hsl(var(--chart-4))"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                />
+                <path
+                    d="M24 12C22.8954 12 22 12.8954 22 14"
+                    stroke="hsl(var(--chart-4))"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                />
+            </svg>
+        </div>
+    )
+}
+
 export default function CreditsPage() {
     return (
     <>
       <Header title="Transactions" />
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-6">
-        <div className="grid w-full max-w-sm grid-cols-1 gap-6">
+        <div className="grid w-full max-w-xl grid-cols-1 md:grid-cols-2 gap-6">
           <Link href="/purchase/payments" className="flex">
             <Card className="flex-1 hover:bg-accent transition-colors">
               <CardContent className="flex flex-col items-center justify-center gap-4 p-6 text-center">
                 <SupplierIcon />
                 <CardTitle className="text-lg font-semibold">Supplier Transaction</CardTitle>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/sales/payments" className="flex">
+            <Card className="flex-1 hover:bg-accent transition-colors">
+              <CardContent className="flex flex-col items-center justify-center gap-4 p-6 text-center">
+                <BuyerIcon />
+                <CardTitle className="text-lg font-semibold">Buyer Transaction</CardTitle>
               </CardContent>
             </Card>
           </Link>
