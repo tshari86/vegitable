@@ -15,7 +15,8 @@ interface TransactionContextType {
     transactions: Transaction[];
     addTransaction: (
         transactions: Omit<Transaction, 'id'>[],
-        partyDetails: { name: string; contact: string; address: string }
+        partyDetails: { name: string; contact: string; address: string },
+        amountPaidOverride?: number
     ) => void;
     supplierPayments: PaymentDetail[];
     customerPayments: PaymentDetail[];
@@ -30,42 +31,30 @@ interface TransactionContextType {
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
 export function TransactionProvider({ children }: { children: React.ReactNode }) {
-    const [transactions, setTransactions] = useState<Transaction[]>(() => initialTransactions);
-    const [supplierPayments, setSupplierPayments] = useState<PaymentDetail[]>(() => initialSupplierPaymentDetails);
-    const [customerPayments, setCustomerPayments] = useState<PaymentDetail[]>(() => initialCustomerPaymentDetails);
-    const [suppliers, setSuppliers] = useState<Supplier[]>(() => initialSuppliers);
-    const [customers, setCustomers] = useState<Customer[]>(() => initialCustomers);
+    const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+    const [supplierPayments, setSupplierPayments] = useState<PaymentDetail[]>(initialSupplierPaymentDetails);
+    const [customerPayments, setCustomerPayments] = useState<PaymentDetail[]>(initialCustomerPaymentDetails);
+    const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
+    const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
 
-    useEffect(() => {
+     useEffect(() => {
         try {
-            const stored = window.localStorage.getItem('transactions');
-            if (stored) setTransactions(JSON.parse(stored));
+            const storedTransactions = window.localStorage.getItem('transactions');
+            if (storedTransactions) setTransactions(JSON.parse(storedTransactions));
+
+            const storedSupplierPayments = window.localStorage.getItem('supplierPayments');
+            if (storedSupplierPayments) setSupplierPayments(JSON.parse(storedSupplierPayments));
+
+            const storedCustomerPayments = window.localStorage.getItem('customerPayments');
+            if (storedCustomerPayments) setCustomerPayments(JSON.parse(storedCustomerPayments));
+
+            const storedSuppliers = window.localStorage.getItem('suppliers');
+            if(storedSuppliers) setSuppliers(JSON.parse(storedSuppliers));
+
+            const storedCustomers = window.localStorage.getItem('customers');
+            if (storedCustomers) setCustomers(JSON.parse(storedCustomers));
         } catch (error) {
-            console.error("Failed to load transactions from localStorage", error);
-        }
-        try {
-            const stored = window.localStorage.getItem('supplierPayments');
-            if (stored) setSupplierPayments(JSON.parse(stored));
-        } catch (error) {
-            console.error("Failed to load supplierPayments from localStorage", error);
-        }
-        try {
-            const stored = window.localStorage.getItem('customerPayments');
-            if (stored) setCustomerPayments(JSON.parse(stored));
-        } catch (error) {
-            console.error("Failed to load customerPayments from localStorage", error);
-        }
-        try {
-            const stored = window.localStorage.getItem('suppliers');
-            if(stored) setSuppliers(JSON.parse(stored));
-        } catch (error) {
-            console.error("Failed to load suppliers from localStorage", error);
-        }
-        try {
-            const stored = window.localStorage.getItem('customers');
-            if (stored) setCustomers(JSON.parse(stored));
-        } catch (error) {
-            console.error("Failed to load customers from localStorage", error);
+            console.error("Failed to load from localStorage", error);
         }
     }, []);
 
@@ -113,10 +102,11 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
 
     const addTransaction = (
         newTransactions: Omit<Transaction, 'id'>[],
-        partyDetails: { name: string; contact: string; address: string }
+        partyDetails: { name: string; contact: string; address: string },
+        amountPaidOverride?: number
     ) => {
         setTransactions(prev => {
-            const newId = (prev.length > 0 ? Math.max(...prev.map(p => p.id)) : 0) + 1;
+            const newId = (prev.length > 0 ? Math.max(...prev.map(t => t.id)) : 0) + 1;
             const newTrans = [
                 ...prev, 
                 ...newTransactions.map((t, i) => ({...t, id: newId + i}))
@@ -147,13 +137,14 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
             setCustomerPayments(prev => {
                 const updatedPayments = [...prev];
                 const existingPaymentIndex = updatedPayments.findIndex(p => p.partyId === customer!.id);
+                 const amountPaid = amountPaidOverride !== undefined 
+                    ? amountPaidOverride 
+                    : (paymentMethod !== 'Credit' ? totalAmount : 0);
                 
                 if (existingPaymentIndex > -1) {
                     const existingPayment = updatedPayments[existingPaymentIndex];
                     existingPayment.totalAmount += totalAmount;
-                    if (paymentMethod !== 'Credit') {
-                        existingPayment.paidAmount += totalAmount;
-                    }
+                    existingPayment.paidAmount += amountPaid;
                     existingPayment.dueAmount = existingPayment.totalAmount - existingPayment.paidAmount;
                     if (existingPayment.dueAmount < 0) existingPayment.dueAmount = 0;
                     existingPayment.paymentMethod = paymentMethod;
@@ -166,8 +157,8 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
                         partyId: customer!.id,
                         partyName: customer!.name,
                         totalAmount: totalAmount,
-                        paidAmount: paymentMethod !== 'Credit' ? totalAmount : 0,
-                        dueAmount: paymentMethod === 'Credit' ? totalAmount : 0,
+                        paidAmount: amountPaid,
+                        dueAmount: totalAmount - amountPaid,
                         paymentMethod: paymentMethod,
                     };
                     return [...prev, newPayment];
@@ -189,13 +180,14 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
             setSupplierPayments(prev => {
                 const updatedPayments = [...prev];
                 const existingPaymentIndex = updatedPayments.findIndex(p => p.partyId === supplier!.id);
+                const amountPaid = amountPaidOverride !== undefined
+                    ? amountPaidOverride
+                    : (paymentMethod !== 'Credit' ? totalAmount : 0);
 
                 if (existingPaymentIndex > -1) {
                     const existingPayment = updatedPayments[existingPaymentIndex];
                     existingPayment.totalAmount += totalAmount;
-                    if (paymentMethod !== 'Credit') {
-                        existingPayment.paidAmount += totalAmount;
-                    }
+                    existingPayment.paidAmount += amountPaid;
                     existingPayment.dueAmount = existingPayment.totalAmount - existingPayment.paidAmount;
                      if (existingPayment.dueAmount < 0) existingPayment.dueAmount = 0;
                     existingPayment.paymentMethod = paymentMethod;
@@ -208,8 +200,8 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
                         partyId: supplier!.id,
                         partyName: supplier!.name,
                         totalAmount: totalAmount,
-                        paidAmount: paymentMethod !== 'Credit' ? totalAmount : 0,
-                        dueAmount: paymentMethod === 'Credit' ? totalAmount : 0,
+                        paidAmount: amountPaid,
+                        dueAmount: totalAmount - amountPaid,
                         paymentMethod: paymentMethod,
                     };
                     return [...prev, newPayment];
@@ -228,10 +220,12 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
 
     const updateSupplier = (updatedSupplier: Supplier) => {
         setSuppliers(prev => prev.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
+        setSupplierPayments(prev => prev.map(p => p.partyId === updatedSupplier.id ? {...p, partyName: updatedSupplier.name} : p));
     }
 
     const updateCustomer = (updatedCustomer: Customer) => {
         setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+        setCustomerPayments(prev => prev.map(p => p.partyId === updatedCustomer.id ? {...p, partyName: updatedCustomer.name} : p));
     }
 
 
