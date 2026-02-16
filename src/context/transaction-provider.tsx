@@ -26,6 +26,7 @@ interface TransactionContextType {
     addSupplier: (supplier: Omit<Supplier, 'id'>) => void;
     updateSupplier: (supplier: Supplier) => void;
     customers: Customer[];
+    addCustomer: (customer: Omit<Customer, 'id'>) => void;
     updateCustomer: (customer: Customer) => void;
     dailySummaries: DailyAccountSummary[];
     saveDailySummary: (summary: DailyAccountSummary) => void;
@@ -223,6 +224,35 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
         }
     };
 
+    const addCustomer = (newCustomerData: Omit<Customer, 'id'>) => {
+        let customer = customers.find(c => c.name.toLowerCase() === newCustomerData.name.toLowerCase());
+        if (!customer) {
+            const newCustomerId = `CUS${(customers.length + 1).toString().padStart(3, '0')}`;
+            customer = {
+                id: newCustomerId,
+                name: newCustomerData.name,
+                contact: newCustomerData.contact || '',
+                address: newCustomerData.address || '',
+            };
+            setCustomers(prev => [...prev, customer!]);
+        }
+        
+        const customerPaymentExists = customerPayments.some(p => p.partyId === customer!.id);
+        if (!customerPaymentExists) {
+            const newPaymentId = (Math.max(0, ...customerPayments.map(p => parseInt(p.id) || 0)) + 1).toString();
+            const newPayment: PaymentDetail = {
+                id: newPaymentId,
+                partyId: customer!.id,
+                partyName: customer!.name,
+                totalAmount: 0,
+                paidAmount: 0,
+                dueAmount: 0,
+                paymentMethod: 'Credit',
+            };
+            setCustomerPayments(prev => [...prev, newPayment]);
+        }
+    };
+
     const addSupplier = (newSupplierData: Omit<Supplier, 'id'>) => {
         let supplier = suppliers.find(s => s.name.toLowerCase() === newSupplierData.name.toLowerCase());
         if (!supplier) {
@@ -283,7 +313,7 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
     };
 
     return (
-        <TransactionContext.Provider value={{ transactions, addTransaction, supplierPayments, customerPayments, updateSupplierPayment, updateCustomerPayment, suppliers, addSupplier, updateSupplier, customers, updateCustomer, dailySummaries, saveDailySummary }}>
+        <TransactionContext.Provider value={{ transactions, addTransaction, supplierPayments, customerPayments, updateSupplierPayment, updateCustomerPayment, suppliers, addSupplier, updateSupplier, customers, addCustomer, updateCustomer, dailySummaries, saveDailySummary }}>
             {children}
         </TransactionContext.Provider>
     );
