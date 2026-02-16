@@ -27,7 +27,7 @@ import { useEffect } from "react";
 import { formatCurrency } from "@/lib/utils";
 
 const paymentFormSchema = z.object({
-  paidAmount: z.coerce.number().min(0, "Paid amount must be non-negative"),
+  additionalPayment: z.coerce.number().min(0, "Payment must be non-negative"),
 });
 
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
@@ -43,60 +43,66 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onSave }: EditP
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
-        paidAmount: 0,
-    }
+      additionalPayment: 0,
+    },
   });
 
   useEffect(() => {
-    if (payment) {
-        form.reset({ paidAmount: payment.paidAmount });
+    if (open) {
+      form.reset({ additionalPayment: 0 });
     }
-  }, [payment, form]);
+  }, [open, form]);
 
   function onSubmit(data: PaymentFormValues) {
     if (payment) {
-        const newDueAmount = payment.totalAmount - data.paidAmount;
-        const updatedPayment = { 
-            ...payment, 
-            paidAmount: data.paidAmount, 
-            dueAmount: newDueAmount > 0 ? newDueAmount : 0,
-        };
-        onSave(updatedPayment);
+      const newPaidAmount = payment.paidAmount + data.additionalPayment;
+      const newDueAmount = payment.totalAmount - newPaidAmount;
+      const updatedPayment = {
+        ...payment,
+        paidAmount: newPaidAmount,
+        dueAmount: newDueAmount > 0 ? newDueAmount : 0,
+      };
+      onSave(updatedPayment);
     }
     onOpenChange(false);
   }
 
-  const watchedPaidAmount = form.watch("paidAmount");
-  const dueAmount = payment && typeof watchedPaidAmount === 'number' ? payment.totalAmount - watchedPaidAmount : 0;
+  const watchedAdditionalPayment = form.watch("additionalPayment");
+  const newDueAmount =
+    payment && typeof watchedAdditionalPayment === "number"
+      ? payment.dueAmount - watchedAdditionalPayment
+      : payment?.dueAmount || 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Payment</DialogTitle>
+          <DialogTitle>Record Payment</DialogTitle>
           <DialogDescription>
-            Update the payment for {payment?.partyName}.
+            Record a new payment for {payment?.partyName}.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <p><strong>Total Amount:</strong> {formatCurrency(payment?.totalAmount || 0)}</p>
+            <p><strong>Currently Paid:</strong> {formatCurrency(payment?.paidAmount || 0)}</p>
+            <p><strong>Amount Due:</strong> {formatCurrency(payment?.dueAmount || 0)}</p>
             <FormField
               control={form.control}
-              name="paidAmount"
+              name="additionalPayment"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Paid Amount</FormLabel>
+                  <FormLabel>New Payment Amount</FormLabel>
                   <FormControl>
-                    <Input type="number" {...field} />
+                    <Input type="number" placeholder="Enter amount being paid" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <p><strong>Due Amount:</strong> {formatCurrency(dueAmount >= 0 ? dueAmount : 0)}</p>
+            <p><strong>Remaining Due:</strong> {formatCurrency(newDueAmount >= 0 ? newDueAmount : 0)}</p>
             <DialogFooter>
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit">Save Payment</Button>
             </DialogFooter>
           </form>
         </Form>
