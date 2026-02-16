@@ -2,9 +2,14 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import type { Transaction, PaymentDetail } from '@/lib/types';
+import type { Transaction, PaymentDetail, Supplier, Customer } from '@/lib/types';
 import { initialTransactions } from '@/lib/transactions';
-import { initialSupplierPaymentDetails, initialCustomerPaymentDetails } from '@/lib/data';
+import { 
+    initialSupplierPaymentDetails, 
+    initialCustomerPaymentDetails,
+    suppliers as initialSuppliers,
+    customers as initialCustomers
+} from '@/lib/data';
 
 interface TransactionContextType {
     transactions: Transaction[];
@@ -13,6 +18,10 @@ interface TransactionContextType {
     customerPayments: PaymentDetail[];
     updateSupplierPayment: (payment: PaymentDetail) => void;
     updateCustomerPayment: (payment: PaymentDetail) => void;
+    suppliers: Supplier[];
+    updateSupplier: (supplier: Supplier) => void;
+    customers: Customer[];
+    updateCustomer: (customer: Customer) => void;
 }
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
@@ -21,6 +30,8 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
     const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
     const [supplierPayments, setSupplierPayments] = useState<PaymentDetail[]>(initialSupplierPaymentDetails);
     const [customerPayments, setCustomerPayments] = useState<PaymentDetail[]>(initialCustomerPaymentDetails);
+    const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
+    const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
@@ -38,6 +49,13 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
                 
                 const storedCustomerPayments = window.localStorage.getItem('customerPayments');
                 if (storedCustomerPayments) setCustomerPayments(JSON.parse(storedCustomerPayments));
+
+                const storedSuppliers = window.localStorage.getItem('suppliers');
+                if (storedSuppliers) setSuppliers(JSON.parse(storedSuppliers));
+                
+                const storedCustomers = window.localStorage.getItem('customers');
+                if (storedCustomers) setCustomers(JSON.parse(storedCustomers));
+
             } catch (error) {
                 console.error("Failed to load from localStorage", error);
             }
@@ -74,6 +92,26 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
         }
     }, [customerPayments, isClient]);
 
+    useEffect(() => {
+        if (isClient) {
+            try {
+                window.localStorage.setItem('suppliers', JSON.stringify(suppliers));
+            } catch (error) {
+                console.error('Error writing to localStorage for key "suppliers":', error);
+            }
+        }
+    }, [suppliers, isClient]);
+
+    useEffect(() => {
+        if (isClient) {
+            try {
+                window.localStorage.setItem('customers', JSON.stringify(customers));
+            } catch (error) {
+                console.error('Error writing to localStorage for key "customers":', error);
+            }
+        }
+    }, [customers, isClient]);
+
 
     const addTransaction = (newTransactions: Omit<Transaction, 'id'>[]) => {
         setTransactions(prev => [
@@ -87,11 +125,20 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
     }
 
     const updateCustomerPayment = (updatedPayment: PaymentDetail) => {
-        setCustomerPayments(prev => prev.map(p => p.id === updatedPayment.id ? updatedPayment : p));
+        setCustomerPayments(prev => prev.map(c => c.id === updatedPayment.id ? updatedPayment : c));
     }
 
+    const updateSupplier = (updatedSupplier: Supplier) => {
+        setSuppliers(prev => prev.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
+    }
+
+    const updateCustomer = (updatedCustomer: Customer) => {
+        setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+    }
+
+
     return (
-        <TransactionContext.Provider value={{ transactions, addTransaction, supplierPayments, customerPayments, updateSupplierPayment, updateCustomerPayment }}>
+        <TransactionContext.Provider value={{ transactions, addTransaction, supplierPayments, customerPayments, updateSupplierPayment, updateCustomerPayment, suppliers, updateSupplier, customers, updateCustomer }}>
             {children}
         </TransactionContext.Provider>
     );

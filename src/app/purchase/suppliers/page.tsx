@@ -26,22 +26,29 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Download, Edit, MoreHorizontal, ArrowLeft } from "lucide-react";
-import { suppliers as initialSuppliers } from "@/lib/data";
 import { downloadCsv } from "@/lib/utils";
 import Link from "next/link";
 import type { Supplier } from "@/lib/types";
 import { EditSupplierDialog } from "@/components/purchase/edit-supplier-dialog";
+import { useTransactions } from "@/context/transaction-provider";
 
 export default function PurchaseSuppliersPage() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
+  const { suppliers, updateSupplier } = useTransactions();
   const [editSupplier, setEditSupplier] = useState<Supplier | null>(null);
 
   const handleExport = () => {
-    downloadCsv(suppliers, "suppliers.csv");
+    const dataToExport = [...suppliers];
+    const totalRow = {
+      id: 'TOTAL',
+      name: `Total Suppliers: ${dataToExport.length}`,
+      contact: '',
+      address: '',
+    };
+    downloadCsv([...dataToExport, totalRow as any], "suppliers.csv");
   };
 
   const handleSave = (updatedSupplier: Supplier) => {
-    setSuppliers(suppliers.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
+    updateSupplier(updatedSupplier);
     setEditSupplier(null);
   };
 

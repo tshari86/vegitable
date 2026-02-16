@@ -1,5 +1,7 @@
+
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
@@ -25,13 +27,29 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Download, Edit, MoreHorizontal, ArrowLeft } from "lucide-react";
-import { customers } from "@/lib/data";
 import { downloadCsv } from "@/lib/utils";
+import { useTransactions } from "@/context/transaction-provider";
+import type { Customer } from "@/lib/types";
+import { EditCustomerDialog } from "@/components/sales/edit-customer-dialog";
 
 export default function SalesCustomersPage() {
+    const { customers, updateCustomer } = useTransactions();
+    const [editCustomer, setEditCustomer] = useState<Customer | null>(null);
 
     const handleExport = () => {
-        downloadCsv(customers, "customers.csv");
+        const dataToExport = [...customers];
+        const totalRow = {
+            id: 'TOTAL',
+            name: `Total Customers: ${dataToExport.length}`,
+            contact: '',
+            address: '',
+        }
+        downloadCsv([...dataToExport, totalRow as any], "customers.csv");
+    }
+
+    const handleSave = (updatedCustomer: Customer) => {
+      updateCustomer(updatedCustomer);
+      setEditCustomer(null);
     }
 
   return (
@@ -66,9 +84,7 @@ export default function SalesCustomersPage() {
                     <TableHead>Customer Name</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Address</TableHead>
-                    <TableHead>
-                      <span className="sr-only">Actions</span>
-                    </TableHead>
+                    <TableHead>Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -91,7 +107,9 @@ export default function SalesCustomersPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem><Edit className="h-4 w-4 mr-2" /> Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setEditCustomer(customer)}>
+                                <Edit className="h-4 w-4 mr-2" /> Edit
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -101,6 +119,12 @@ export default function SalesCustomersPage() {
               </Table>
             </CardContent>
           </Card>
+          <EditCustomerDialog
+            customer={editCustomer}
+            open={!!editCustomer}
+            onOpenChange={(open) => !open && setEditCustomer(null)}
+            onSave={handleSave}
+          />
       </main>
     </>
   );
