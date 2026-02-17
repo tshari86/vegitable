@@ -27,26 +27,48 @@ import {
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { downloadCsv, formatCurrency } from '@/lib/utils';
-
-const recentTransactions = [
-  { id: '1', customer: 'Venkatesh', amount: 1250.00, status: 'Paid' },
-  { id: '2', customer: 'Suresh Kumar', amount: 850.50, status: 'Paid' },
-  { id: '3', customer: 'Anbu Retail', amount: 3400.00, status: 'Credit' },
-  { id: '4', customer: 'Kannan Stores', amount: 550.00, status: 'Paid' },
-  { id: '5', customer: 'FreshMart', amount: 2100.00, status: 'Credit' },
-];
+import { useTransactions } from '@/context/transaction-provider';
+import { useMemo } from 'react';
+import { products } from '@/lib/data';
 
 export default function DashboardPage() {
+    const { transactions, customers } = useTransactions();
+
+    const recentTransactions = useMemo(() => {
+      return transactions.slice(-5).reverse().map(t => ({
+        id: t.id.toString(),
+        customer: t.party,
+        amount: t.amount,
+        status: t.payment === 'Credit' ? 'Credit' : 'Paid'
+      }));
+    }, [transactions]);
+
+    const totalRevenue = useMemo(() => transactions.filter(t => t.type === 'Sale').reduce((acc, curr) => acc + curr.amount, 0), [transactions]);
+    const salesCount = useMemo(() => transactions.filter(t => t.type === 'Sale').length, [transactions]);
+
     const handleExport = () => {
-        const dataToExport = [...recentTransactions];
-        const totalAmount = dataToExport.reduce((acc, curr) => acc + curr.amount, 0);
-        const totalRow = {
-            id: 'TOTAL',
-            customer: 'Total',
-            amount: totalAmount,
-            status: '',
-        };
-        downloadCsv([...dataToExport, totalRow as any], 'recent_transactions.csv');
+        const dataToExport = transactions.map(t => ({
+          Date: t.date,
+          Party: t.party,
+          Type: t.type,
+          Item: t.item,
+          Amount: t.amount,
+          Payment: t.payment,
+        }));
+        if (dataToExport.length > 0) {
+            const totalAmount = dataToExport.reduce((acc, curr) => acc + curr.Amount, 0);
+            const totalRow = {
+                Date: 'TOTAL',
+                Party: 'Total',
+                Type: '',
+                Item: '',
+                Amount: totalAmount,
+                Payment: '',
+            };
+            downloadCsv([...dataToExport, totalRow as any], 'transactions.csv');
+        } else {
+            downloadCsv([], 'transactions.csv');
+        }
     }
 
   return (
@@ -65,9 +87,9 @@ export default function DashboardPage() {
               <Banknote className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">45,231.89</div>
+              <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
               <p className="text-xs text-muted-foreground">
-                +20.1% from last month
+                from all sales
               </p>
             </CardContent>
           </Card>
@@ -77,21 +99,21 @@ export default function DashboardPage() {
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+125</div>
+              <div className="text-2xl font-bold">+{salesCount}</div>
               <p className="text-xs text-muted-foreground">
-                +19% from last month
+                total sales transactions
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">New Customers</CardTitle>
+              <CardTitle className="text-sm font-medium">Customers</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+23</div>
+              <div className="text-2xl font-bold">+{customers.length}</div>
               <p className="text-xs text-muted-foreground">
-                +10 from last month
+                total customers
               </p>
             </CardContent>
           </Card>
@@ -101,9 +123,9 @@ export default function DashboardPage() {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">57</div>
+              <div className="text-2xl font-bold">{products.length}</div>
               <p className="text-xs text-muted-foreground">
-                3 new items added
+                types of items
               </p>
             </CardContent>
           </Card>
@@ -121,7 +143,7 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle>Recent Transactions</CardTitle>
               <CardDescription>
-                You made 25 transactions this month.
+                You have {transactions.length} transactions in total.
               </CardDescription>
             </CardHeader>
             <CardContent>
