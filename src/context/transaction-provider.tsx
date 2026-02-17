@@ -34,7 +34,7 @@ interface TransactionContextType {
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
-export function TransactionProvider({ children }: { children: React.ReactNode }) {
+export function TransactionProvider({ children }: { children: ReactNode }) {
     const firestore = useFirestore();
     const { user } = useUser();
     const { toast } = useToast();
@@ -82,7 +82,8 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
         setDoc(newSupplierRef, supplierWithId)
           .then(() => {
             const paymentRef = doc(firestore, 'supplierPayments', newSupplierId);
-            const newPayment: Omit<PaymentDetail, 'id'> = {
+            const newPayment: PaymentDetail = {
+                id: newSupplierId,
                 partyId: newSupplierId,
                 partyName: newSupplierData.name,
                 totalAmount: 0,
@@ -116,7 +117,8 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
         setDoc(newCustomerRef, customerWithId)
             .then(() => {
                 const paymentRef = doc(firestore, 'customerPayments', newCustomerId);
-                const newPayment: Omit<PaymentDetail, 'id'> = {
+                const newPayment: PaymentDetail = {
+                    id: newCustomerId,
                     partyId: newCustomerId,
                     partyName: newCustomerData.name,
                     totalAmount: 0,
@@ -181,9 +183,8 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
                 });
             } else {
                 const dueAmount = totalAmount - amountPaid;
-                const newPaymentId = (Math.max(0, ...customerPayments.map(p => parseInt(p.id) || 0)) + 1).toString();
                 batch.set(paymentRef, {
-                    id: newPaymentId,
+                    id: customerId,
                     partyId: customerId,
                     partyName: partyDetails.name,
                     totalAmount: totalAmount,
@@ -219,9 +220,8 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
                 });
             } else {
                 const dueAmount = totalAmount - amountPaid;
-                const newPaymentId = (Math.max(0, ...supplierPayments.map(p => parseInt(p.id) || 0)) + 1).toString();
                 batch.set(paymentRef, {
-                    id: newPaymentId,
+                    id: supplierId,
                     partyId: supplierId,
                     partyName: partyDetails.name,
                     totalAmount: totalAmount,

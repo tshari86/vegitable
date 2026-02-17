@@ -2,7 +2,7 @@
 'use client';
 
 import { FirebaseApp } from 'firebase/app';
-import { Auth } from 'firebase/auth';
+import { Auth, signInAnonymously } from 'firebase/auth';
 import { Firestore } from 'firebase/firestore';
 import { ReactNode, useEffect, useState } from 'react';
 
@@ -17,19 +17,29 @@ export function FirebaseClientProvider({ children }: { children: ReactNode }) {
     auth: Auth;
     firestore: Firestore;
   } | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const init = async () => {
       const firebaseInstances = await initializeFirebase();
+      try {
+        await signInAnonymously(firebaseInstances.auth);
+      } catch (error) {
+        console.error("Anonymous sign-in failed:", error);
+      }
       setFirebase(firebaseInstances);
+      setLoading(false);
     };
 
     init();
   }, []);
 
-  if (!firebase) {
-    // You can return a loader here
-    return null;
+  if (loading || !firebase) {
+    return (
+        <div className="flex h-screen items-center justify-center">
+            <p>Loading...</p>
+        </div>
+    );
   }
 
   return (
