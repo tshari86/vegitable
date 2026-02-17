@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TransactionProvider } from '@/context/transaction-provider';
 import { AppShell } from '@/components/layout/app-shell';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { AuthGuard } from '@/components/auth/auth-guard';
 
 export const metadata: Metadata = {
   title: 'OM Saravana Billing',
@@ -25,7 +26,9 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <FirebaseClientProvider>
           <TransactionProvider>
-            <AppShell>{children}</AppShell>
+            <AuthGuard>
+              <AppShell>{children}</AppShell>
+            </AuthGuard>
           </TransactionProvider>
         </FirebaseClientProvider>
         <Toaster />

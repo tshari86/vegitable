@@ -22,11 +22,6 @@ export function FirebaseClientProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const init = async () => {
       const firebaseInstances = await initializeFirebase();
-      try {
-        await signInAnonymously(firebaseInstances.auth);
-      } catch (error) {
-        console.error("Anonymous sign-in failed:", error);
-      }
       setFirebase(firebaseInstances);
       setLoading(false);
     };
@@ -36,9 +31,9 @@ export function FirebaseClientProvider({ children }: { children: ReactNode }) {
 
   if (loading || !firebase) {
     return (
-        <div className="flex h-screen items-center justify-center">
-            <p>Loading...</p>
-        </div>
+      <div className="flex h-screen items-center justify-center">
+        <p>Loading...</p>
+      </div>
     );
   }
 

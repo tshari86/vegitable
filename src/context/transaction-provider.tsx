@@ -1,7 +1,7 @@
 
 "use client";
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useMemo } from 'react';
 import { collection, doc, addDoc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import type { Transaction, PaymentDetail, Supplier, Customer, DailyAccountSummary } from '@/lib/types';
 import { useFirestore, useUser } from '@/firebase';
@@ -22,10 +22,10 @@ interface TransactionContextType {
     updateSupplierPayment: (payment: PaymentDetail) => void;
     updateCustomerPayment: (payment: PaymentDetail) => void;
     suppliers: Supplier[];
-    addSupplier: (supplier: Omit<Supplier, 'id'>) => void;
+    addSupplier: (supplier: Omit<Supplier, 'id'>) => Promise<void>;
     updateSupplier: (supplier: Supplier) => void;
     customers: Customer[];
-    addCustomer: (customer: Omit<Customer, 'id'>) => void;
+    addCustomer: (customer: Omit<Customer, 'id'>) => Promise<void>;
     updateCustomer: (customer: Customer) => void;
     dailySummaries: DailyAccountSummary[];
     saveDailySummary: (summary: DailyAccountSummary) => void;
@@ -39,24 +39,23 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
     const { user } = useUser();
     const { toast } = useToast();
 
-    const { data: transactionsData, loading: transactionsLoading } = useCollection<Transaction>(
-        firestore && user ? collection(firestore, 'transactions') : null
-    );
-    const { data: supplierPaymentsData, loading: supplierPaymentsLoading } = useCollection<PaymentDetail>(
-        firestore && user ? collection(firestore, 'supplierPayments') : null
-    );
-    const { data: customerPaymentsData, loading: customerPaymentsLoading } = useCollection<PaymentDetail>(
-        firestore && user ? collection(firestore, 'customerPayments') : null
-    );
-    const { data: suppliersData, loading: suppliersLoading } = useCollection<Supplier>(
-        firestore && user ? collection(firestore, 'suppliers') : null
-    );
-    const { data: customersData, loading: customersLoading } = useCollection<Customer>(
-        firestore && user ? collection(firestore, 'customers') : null
-    );
-    const { data: dailySummariesData, loading: dailySummariesLoading } = useCollection<DailyAccountSummary>(
-        firestore && user ? collection(firestore, 'dailySummaries') : null
-    );
+    const transactionsRef = useMemo(() => firestore && user ? collection(firestore, 'transactions') : null, [firestore, user]);
+    const { data: transactionsData, loading: transactionsLoading } = useCollection<Transaction>(transactionsRef);
+
+    const supplierPaymentsRef = useMemo(() => firestore && user ? collection(firestore, 'supplierPayments') : null, [firestore, user]);
+    const { data: supplierPaymentsData, loading: supplierPaymentsLoading } = useCollection<PaymentDetail>(supplierPaymentsRef);
+
+    const customerPaymentsRef = useMemo(() => firestore && user ? collection(firestore, 'customerPayments') : null, [firestore, user]);
+    const { data: customerPaymentsData, loading: customerPaymentsLoading } = useCollection<PaymentDetail>(customerPaymentsRef);
+
+    const suppliersRef = useMemo(() => firestore && user ? collection(firestore, 'suppliers') : null, [firestore, user]);
+    const { data: suppliersData, loading: suppliersLoading } = useCollection<Supplier>(suppliersRef);
+
+    const customersRef = useMemo(() => firestore && user ? collection(firestore, 'customers') : null, [firestore, user]);
+    const { data: customersData, loading: customersLoading } = useCollection<Customer>(customersRef);
+
+    const dailySummariesRef = useMemo(() => firestore && user ? collection(firestore, 'dailySummaries') : null, [firestore, user]);
+    const { data: dailySummariesData, loading: dailySummariesLoading } = useCollection<DailyAccountSummary>(dailySummariesRef);
 
     const transactions = transactionsData || [];
     const supplierPayments = supplierPaymentsData || [];
@@ -64,14 +63,24 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
     const suppliers = suppliersData || [];
     const customers = customersData || [];
     const dailySummaries = dailySummariesData || [];
-    
+
     const loading = transactionsLoading || supplierPaymentsLoading || customerPaymentsLoading || suppliersLoading || customersLoading || dailySummariesLoading;
 
-    const addSupplier = (newSupplierData: Omit<Supplier, 'id'>) => {
-        if (!firestore) return;
+    const addSupplier = async (newSupplierData: Omit<Supplier, 'id'>) => {
+        if (!firestore) {
+            const error = new Error("Firestore not initialized");
+            console.error(error);
+            throw error;
+        }
+
+        if (!user) {
+            const error = new Error("User not authenticated");
+            console.error(error);
+            throw error;
+        }
 
         if (suppliers.some(s => s.name.toLowerCase() === newSupplierData.name.toLowerCase())) {
-            toast({ title: 'Error', description: 'Supplier with this name already exists.', variant: 'destructive'});
+            toast({ title: 'Error', description: 'Supplier with this name already exists.', variant: 'destructive' });
             return;
         }
 
@@ -79,8 +88,9 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         const newSupplierId = newSupplierRef.id;
         const supplierWithId = { ...newSupplierData, id: newSupplierId };
 
-        setDoc(newSupplierRef, supplierWithId)
-          .then(() => {
+        try {
+            await setDoc(newSupplierRef, supplierWithId);
+
             const paymentRef = doc(firestore, 'supplierPayments', newSupplierId);
             const newPayment: PaymentDetail = {
                 id: newSupplierId,
@@ -91,22 +101,35 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
                 dueAmount: 0,
                 paymentMethod: 'Credit',
             };
-            setDoc(paymentRef, newPayment).catch(e => {
-                const permissionError = new FirestorePermissionError({ path: paymentRef.path, operation: 'create', requestResourceData: newPayment });
-                errorEmitter.emit('permission-error', permissionError);
-            });
-          })
-          .catch(e => {
-              const permissionError = new FirestorePermissionError({ path: newSupplierRef.path, operation: 'create', requestResourceData: newSupplierData });
-              errorEmitter.emit('permission-error', permissionError);
-          });
+            await setDoc(paymentRef, newPayment);
+
+            toast({ title: 'Success', description: 'Supplier added successfully.' });
+
+        } catch (e: any) {
+            console.error("Error adding supplier:", e);
+            console.error("User authenticated:", !!user);
+            console.error("Firestore initialized:", !!firestore);
+            const permissionError = new FirestorePermissionError({ path: newSupplierRef.path, operation: 'create', requestResourceData: newSupplierData });
+            errorEmitter.emit('permission-error', permissionError);
+            throw e;
+        }
     };
 
-    const addCustomer = (newCustomerData: Omit<Customer, 'id'>) => {
-        if (!firestore) return;
+    const addCustomer = async (newCustomerData: Omit<Customer, 'id'>) => {
+        if (!firestore) {
+            const error = new Error("Firestore not initialized");
+            console.error(error);
+            throw error;
+        }
+
+        if (!user) {
+            const error = new Error("User not authenticated");
+            console.error(error);
+            throw error;
+        }
 
         if (customers.some(c => c.name.toLowerCase() === newCustomerData.name.toLowerCase())) {
-            toast({ title: 'Error', description: 'Customer with this name already exists.', variant: 'destructive'});
+            toast({ title: 'Error', description: 'Customer with this name already exists.', variant: 'destructive' });
             return;
         }
 
@@ -114,29 +137,32 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         const newCustomerId = newCustomerRef.id;
         const customerWithId = { ...newCustomerData, id: newCustomerId };
 
-        setDoc(newCustomerRef, customerWithId)
-            .then(() => {
-                const paymentRef = doc(firestore, 'customerPayments', newCustomerId);
-                const newPayment: PaymentDetail = {
-                    id: newCustomerId,
-                    partyId: newCustomerId,
-                    partyName: newCustomerData.name,
-                    totalAmount: 0,
-                    paidAmount: 0,
-                    dueAmount: 0,
-                    paymentMethod: 'Credit',
-                };
-                setDoc(paymentRef, newPayment).catch(e => {
-                    const permissionError = new FirestorePermissionError({ path: paymentRef.path, operation: 'create', requestResourceData: newPayment });
-                    errorEmitter.emit('permission-error', permissionError);
-                });
-            })
-            .catch(e => {
-                const permissionError = new FirestorePermissionError({ path: newCustomerRef.path, operation: 'create', requestResourceData: newCustomerData });
-                errorEmitter.emit('permission-error', permissionError);
-            });
+        try {
+            await setDoc(newCustomerRef, customerWithId);
+
+            const paymentRef = doc(firestore, 'customerPayments', newCustomerId);
+            const newPayment: PaymentDetail = {
+                id: newCustomerId,
+                partyId: newCustomerId,
+                partyName: newCustomerData.name,
+                totalAmount: 0,
+                paidAmount: 0,
+                dueAmount: 0,
+                paymentMethod: 'Credit',
+            };
+            await setDoc(paymentRef, newPayment);
+            toast({ title: 'Success', description: 'Customer added successfully.' });
+
+        } catch (e: any) {
+            console.error("Error adding customer:", e);
+            console.error("User authenticated:", !!user);
+            console.error("Firestore initialized:", !!firestore);
+            const permissionError = new FirestorePermissionError({ path: newCustomerRef.path, operation: 'create', requestResourceData: newCustomerData });
+            errorEmitter.emit('permission-error', permissionError);
+            throw e;
+        }
     };
-    
+
     const addTransaction = (
         newTransactions: Omit<Transaction, 'id'>[],
         partyDetails: { name: string; contact: string; address: string },
@@ -196,7 +222,7 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         } else { // Purchase
             let supplier = suppliers.find(s => s.name.toLowerCase() === partyName.toLowerCase());
             let supplierId: string;
-    
+
             if (!supplier) {
                 const newSupplierRef = doc(collection(firestore, 'suppliers'));
                 supplierId = newSupplierRef.id;
@@ -204,7 +230,7 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
             } else {
                 supplierId = supplier.id;
             }
-    
+
             const paymentRef = doc(firestore, 'supplierPayments', supplierId);
             const existingPayment = supplierPayments.find(p => p.partyId === supplierId);
             const amountPaid = amountPaidOverride !== undefined ? amountPaidOverride : (paymentMethod !== 'Credit' ? totalAmount : 0);
@@ -242,8 +268,8 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         if (!firestore) return;
         const paymentRef = doc(firestore, 'supplierPayments', updatedPayment.partyId);
         updateDoc(paymentRef, updatedPayment as any).catch(e => {
-             const permissionError = new FirestorePermissionError({ path: paymentRef.path, operation: 'update', requestResourceData: updatedPayment });
-             errorEmitter.emit('permission-error', permissionError);
+            const permissionError = new FirestorePermissionError({ path: paymentRef.path, operation: 'update', requestResourceData: updatedPayment });
+            errorEmitter.emit('permission-error', permissionError);
         });
     }
 

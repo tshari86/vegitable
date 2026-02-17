@@ -26,6 +26,7 @@ import { z } from "zod";
 import { useState } from "react";
 import { useTransactions } from "@/context/transaction-provider";
 import { User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const customerFormSchema = z.object({
   name: z.string().min(1, "Customer Name Required"),
@@ -44,10 +45,26 @@ export function AddCustomerDialog({ children }: { children: React.ReactNode }) {
     },
   });
 
-  function onSubmit(data: CustomerFormValues) {
-    addCustomer({ name: data.name, contact: "", address: "" });
-    setOpen(false);
-    form.reset();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { toast } = useToast();
+
+  async function onSubmit(data: CustomerFormValues) {
+    setIsLoading(true);
+    try {
+      await addCustomer({ name: data.name, contact: "", address: "" });
+      setOpen(false);
+      form.reset();
+    } catch (error: any) {
+      console.error("Failed to add customer", error);
+      toast({
+        title: "Error adding customer",
+        description: error.message || "Unknown error",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -81,7 +98,9 @@ export function AddCustomerDialog({ children }: { children: React.ReactNode }) {
                   Close
                 </Button>
               </DialogClose>
-              <Button type="submit">Save changes</Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Saving..." : "Save changes"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
