@@ -2,13 +2,11 @@ export type Product = {
     id: string;
     itemCode: string;
     name: string;
-    rate1: number;
-    rate2: number;
-    rate3: number;
 };
 
 export type Supplier = {
     id: string;
+    code: string;
     name: string;
     contact: string;
     address: string;
@@ -16,6 +14,7 @@ export type Supplier = {
 
 export type Customer = {
     id: string;
+    code: string;
     name: string;
     contact: string;
     address: string;
@@ -65,6 +64,7 @@ export type Transaction = {
     item: string;
     amount: number;
     payment: string;
+    billNumber?: number;
 }
 
 export type DailyAccountSummary = {

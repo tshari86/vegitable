@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/table";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useTransactions } from "@/context/transaction-provider";
-import { products } from "@/lib/data";
+
 import { useToast } from "@/hooks/use-toast";
 
 const intakeItemSchema = z.object({
@@ -66,7 +66,7 @@ const intakeFormSchema = z.object({
 type IntakeFormValues = z.infer<typeof intakeFormSchema>;
 
 export default function VegetableIntakePage() {
-  const { suppliers, supplierPayments, addTransaction } = useTransactions();
+  const { suppliers, supplierPayments, addTransaction, products } = useTransactions();
   const { toast } = useToast();
   const [outstanding, setOutstanding] = useState(0);
 
@@ -114,23 +114,23 @@ export default function VegetableIntakePage() {
     }
 
     const paymentMethod = data.amountPaid < totalCost ? 'Credit' : 'Cash';
-    
+
     const newTransactions = data.items.map(item => {
-        const product = products.find(p => p.id === item.itemId);
-        return {
-            date: format(data.collectionDate, 'yyyy-MM-dd'),
-            party: supplier.name,
-            type: 'Purchase' as const,
-            item: product?.name || 'Unknown Item',
-            amount: item.price * item.quantity,
-            payment: paymentMethod,
-        };
+      const product = products.find(p => p.id === item.itemId);
+      return {
+        date: format(data.collectionDate, 'yyyy-MM-dd'),
+        party: supplier.name,
+        type: 'Purchase' as const,
+        item: product?.name || 'Unknown Item',
+        amount: item.price * item.quantity,
+        payment: paymentMethod,
+      };
     });
 
     addTransaction(
-        newTransactions, 
-        { name: supplier.name, contact: supplier.contact, address: supplier.address },
-        data.amountPaid
+      newTransactions,
+      { name: supplier.name, contact: supplier.contact, address: supplier.address },
+      data.amountPaid
     );
 
     toast({ title: 'Success', description: 'Intake submitted successfully.' });
@@ -162,21 +162,20 @@ export default function VegetableIntakePage() {
       setNewItemQuantity("");
       setNewItemPrice("");
     } else {
-       toast({ variant: 'destructive', title: 'Error', description: 'Please enter valid quantity and price.' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Please enter valid quantity and price.' });
     }
   };
-  
+
   const handleItemSelect = (itemId: string) => {
     setNewItemId(itemId);
-    const product = products.find(p => p.id === itemId);
     if (product) {
-      setNewItemPrice(product.rate1.toString());
+      setNewItemPrice("");
     }
   }
 
   return (
     <>
-      <Header title="Vegetable Intake" />
+      <Header title="Purchase" />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -212,7 +211,7 @@ export default function VegetableIntakePage() {
                     name="collectionDate"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                         <FormLabel>Collection Date</FormLabel>
+                        <FormLabel>Collection Date</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -245,39 +244,39 @@ export default function VegetableIntakePage() {
 
                 {/* Add Item Form */}
                 <div className="space-y-2 rounded-lg border p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-8 gap-4 items-end">
-                        <div className="md:col-span-3">
-                            <Label>Item</Label>
-                            <Select onValueChange={handleItemSelect} value={newItemId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Item" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="md:col-span-2">
-                             <Label>Weight / Quantity (Kg)</Label>
-                            <Input placeholder="e.g. 120" value={newItemQuantity} onChange={e => setNewItemQuantity(e.target.value)} type="number" />
-                        </div>
-                        <div className="md:col-span-2">
-                             <Label>Price (per Kg)</Label>
-                            <Input placeholder="e.g. 50" value={newItemPrice} onChange={e => setNewItemPrice(e.target.value)} type="number" />
-                        </div>
-                        <div className="md:col-span-1">
-                            <Button type="button" size="icon" onClick={handleAddItem} className="w-full">
-                                <Plus className="h-4 w-4"/>
-                                <span className="sr-only">Add Item</span>
-                            </Button>
-                        </div>
+                  <div className="grid grid-cols-1 md:grid-cols-8 gap-4 items-end">
+                    <div className="md:col-span-3">
+                      <Label>Item</Label>
+                      <Select onValueChange={handleItemSelect} value={newItemId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Item" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     </div>
+                    <div className="md:col-span-2">
+                      <Label>Weight / Quantity (Kg)</Label>
+                      <Input placeholder="e.g. 120" value={newItemQuantity} onChange={e => setNewItemQuantity(e.target.value)} type="number" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label>Price (per Kg)</Label>
+                      <Input placeholder="e.g. 50" value={newItemPrice} onChange={e => setNewItemPrice(e.target.value)} type="number" />
+                    </div>
+                    <div className="md:col-span-1">
+                      <Button type="button" size="icon" onClick={handleAddItem} className="w-full">
+                        <Plus className="h-4 w-4" />
+                        <span className="sr-only">Add Item</span>
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Items Table */}
                 <div>
                   <FormLabel>Items</FormLabel>
-                   <div className="rounded-md border">
+                  <div className="rounded-md border">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -312,45 +311,45 @@ export default function VegetableIntakePage() {
                         })}
                       </TableBody>
                     </Table>
-                   </div>
-                   <FormMessage>{form.formState.errors.items?.message}</FormMessage>
+                  </div>
+                  <FormMessage>{form.formState.errors.items?.message}</FormMessage>
                 </div>
-                
+
                 {/* Summary */}
                 <div className="flex justify-end">
-                    <div className="w-full max-w-sm space-y-4">
-                         <div className="grid grid-cols-2 gap-4 items-center">
-                            <span className="font-medium text-muted-foreground">Outstanding</span>
-                            <span className="text-right font-medium">{formatCurrency(outstanding)}</span>
-                         </div>
-                         <div className="grid grid-cols-2 gap-4 items-center">
-                            <span className="font-medium text-muted-foreground">Total Cost</span>
-                            <span className="text-right font-medium">{formatCurrency(totalCost)}</span>
-                         </div>
-                          <div className="grid grid-cols-2 gap-4 items-center font-bold text-lg">
-                            <span>Total</span>
-                            <span className="text-right">{formatCurrency(total)}</span>
-                         </div>
-                         <div className="grid grid-cols-2 gap-4 items-center">
-                            <FormLabel htmlFor="amountPaid">Amount Paid</FormLabel>
-                             <FormField
-                                control={form.control}
-                                name="amountPaid"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormControl>
-                                    <Input id="amountPaid" type="number" className="text-right" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                         </div>
-                         <div className="grid grid-cols-2 gap-4 items-center">
-                            <span className="font-medium text-muted-foreground">Balance Amount</span>
-                            <span className="text-right font-medium">{formatCurrency(balanceAmount)}</span>
-                         </div>
+                  <div className="w-full max-w-sm space-y-4">
+                    <div className="grid grid-cols-2 gap-4 items-center">
+                      <span className="font-medium text-muted-foreground">Outstanding</span>
+                      <span className="text-right font-medium">{formatCurrency(outstanding)}</span>
                     </div>
+                    <div className="grid grid-cols-2 gap-4 items-center">
+                      <span className="font-medium text-muted-foreground">Total Cost</span>
+                      <span className="text-right font-medium">{formatCurrency(totalCost)}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 items-center font-bold text-lg">
+                      <span>Total</span>
+                      <span className="text-right">{formatCurrency(total)}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 items-center">
+                      <FormLabel htmlFor="amountPaid">Amount Paid</FormLabel>
+                      <FormField
+                        control={form.control}
+                        name="amountPaid"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input id="amountPaid" type="number" className="text-right" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 items-center">
+                      <span className="font-medium text-muted-foreground">Balance Amount</span>
+                      <span className="text-right font-medium">{formatCurrency(balanceAmount)}</span>
+                    </div>
+                  </div>
                 </div>
 
               </CardContent>
@@ -365,4 +364,3 @@ export default function VegetableIntakePage() {
   );
 }
 
-    

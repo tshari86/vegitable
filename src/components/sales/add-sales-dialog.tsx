@@ -32,7 +32,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PlusCircle, Trash } from "lucide-react";
-import { products } from "@/lib/data";
+
 import { useState } from "react";
 import { useTransactions } from "@/context/transaction-provider";
 import type { Transaction } from "@/lib/types";
@@ -53,7 +53,7 @@ type SalesFormValues = z.infer<typeof salesFormSchema>;
 
 export function AddSalesDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const { addTransaction } = useTransactions();
+  const { addTransaction, products } = useTransactions();
   const form = useForm<SalesFormValues>({
     resolver: zodResolver(salesFormSchema),
     defaultValues: {
@@ -72,12 +72,12 @@ export function AddSalesDialog({ children }: { children: React.ReactNode }) {
 
   function onSubmit(data: SalesFormValues) {
     const newTransactions: Omit<Transaction, 'id'>[] = data.items.map(item => ({
-        date: new Date().toISOString().split('T')[0],
-        party: data.customerName,
-        type: 'Sale',
-        item: item.itemName,
-        amount: item.price * item.quantity,
-        payment: data.paymentMethod,
+      date: new Date().toISOString().split('T')[0],
+      party: data.customerName,
+      type: 'Sale',
+      item: item.itemName,
+      amount: item.price * item.quantity,
+      payment: data.paymentMethod,
     }));
     addTransaction(newTransactions, { name: data.customerName, contact: data.contact, address: data.address });
     setOpen(false);
@@ -97,152 +97,152 @@ export function AddSalesDialog({ children }: { children: React.ReactNode }) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
+              <FormField
                 control={form.control}
                 name="customerName"
                 render={({ field }) => (
-                    <FormItem>
+                  <FormItem>
                     <FormLabel>Customer Name</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g. Venkatesh" {...field} />
+                      <Input placeholder="e.g. Venkatesh" {...field} />
                     </FormControl>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
-                <FormField
+              />
+              <FormField
                 control={form.control}
                 name="contact"
                 render={({ field }) => (
-                    <FormItem>
+                  <FormItem>
                     <FormLabel>Contact</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g. 9123456780" {...field} />
+                      <Input placeholder="e.g. 9123456780" {...field} />
                     </FormControl>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
-                <FormField
+              />
+              <FormField
                 control={form.control}
                 name="address"
                 render={({ field }) => (
-                    <FormItem>
+                  <FormItem>
                     <FormLabel>Address</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g. T. Nagar, Chennai" {...field} />
+                      <Input placeholder="e.g. T. Nagar, Chennai" {...field} />
                     </FormControl>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
+              />
             </div>
-            
+
             <div className="space-y-2">
-                <FormLabel>Items</FormLabel>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Item Name</TableHead>
-                            <TableHead>Price</TableHead>
-                            <TableHead>Quantity</TableHead>
-                            <TableHead></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {fields.map((field, index) => (
-                            <TableRow key={field.id}>
-                                <TableCell>
-                                    <FormField
-                                    control={form.control}
-                                    name={`items.${index}.itemName`}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormControl>
-                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select an item" />
-                                                </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {products.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
-                                                </SelectContent>
-                                            </Select>
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                     <FormField
-                                        control={form.control}
-                                        name={`items.${index}.price`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormControl>
-                                                <Input type="number" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                        />
-                                </TableCell>
-                                <TableCell>
-                                     <FormField
-                                        control={form.control}
-                                        name={`items.${index}.quantity`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormControl>
-                                                <Input type="number" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                        />
-                                </TableCell>
-                                <TableCell>
-                                    <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
-                                        <Trash className="h-4 w-4" />
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-                <Button type="button" size="sm" onClick={() => append({ itemName: "", price: 0, quantity: 1 })}>
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Add Item
-                </Button>
-                <FormMessage>{form.formState.errors.items?.message}</FormMessage>
+              <FormLabel>Items</FormLabel>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {fields.map((field, index) => (
+                    <TableRow key={field.id}>
+                      <TableCell>
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.itemName`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select an item" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {products.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.price`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input type="number" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.quantity`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input type="number" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Button type="button" size="sm" onClick={() => append({ itemName: "", price: 0, quantity: 1 })}>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Item
+              </Button>
+              <FormMessage>{form.formState.errors.items?.message}</FormMessage>
             </div>
 
             <FormField
-                control={form.control}
-                name="paymentMethod"
-                render={({ field }) => (
+              control={form.control}
+              name="paymentMethod"
+              render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Payment Method</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormLabel>Payment Method</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                        <SelectTrigger>
+                      <SelectTrigger>
                         <SelectValue placeholder="Select a payment method" />
-                        </SelectTrigger>
+                      </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        <SelectItem value="Cash">Cash</SelectItem>
-                        <SelectItem value="UPI/Digital">UPI/Digital</SelectItem>
-                        <SelectItem value="Credit">Credit</SelectItem>
+                      <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="UPI/Digital">UPI/Digital</SelectItem>
+                      <SelectItem value="Credit">Credit</SelectItem>
                     </SelectContent>
-                    </Select>
-                    <FormMessage />
+                  </Select>
+                  <FormMessage />
                 </FormItem>
-                )}
+              )}
             />
-             <DialogFooter>
-                <Button type="submit">Save Sales</Button>
+            <DialogFooter>
+              <Button type="submit">Save Sales</Button>
             </DialogFooter>
           </form>
         </Form>

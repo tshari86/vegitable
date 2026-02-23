@@ -24,35 +24,34 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState } from "react";
+import { useTransactions } from "@/context/transaction-provider";
 
 const productFormSchema = z.object({
   itemCode: z.string().min(1, "Item code is required"),
   name: z.string().min(1, "Item name is required"),
-  rate1: z.coerce.number().min(0, "Rate must be non-negative"),
-  rate2: z.coerce.number().min(0, "Rate must be non-negative"),
-  rate3: z.coerce.number().min(0, "Rate must be non-negative"),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
 
 export function AddProductDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const { addProduct } = useTransactions();
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       itemCode: "",
       name: "",
-      rate1: 0,
-      rate2: 0,
-      rate3: 0,
     },
   });
 
-  function onSubmit(data: ProductFormValues) {
-    console.log(data);
-    // Here you would typically handle the form submission, e.g., send to an API
-    setOpen(false);
-    form.reset();
+  async function onSubmit(data: ProductFormValues) {
+    try {
+      await addProduct(data);
+      setOpen(false);
+      form.reset();
+    } catch (error) {
+      console.error("Failed to add product", error);
+    }
   }
 
   return (
@@ -95,47 +94,7 @@ export function AddProductDialog({ children }: { children: React.ReactNode }) {
                 )}
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="rate1"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Rate 1</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="rate2"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Rate 2</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="rate3"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Rate 3</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+
             <DialogFooter>
               <Button type="submit">Save Product</Button>
             </DialogFooter>

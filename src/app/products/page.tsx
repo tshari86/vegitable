@@ -24,29 +24,46 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Download, Edit, MoreHorizontal, PlusCircle, Trash } from "lucide-react";
-import { products } from "@/lib/data";
+import { useTransactions } from "@/context/transaction-provider";
 import { downloadCsv, formatCurrency } from "@/lib/utils";
 import { AddProductDialog } from "@/components/products/add-product-dialog";
+import { EditProductDialog } from "@/components/products/edit-product-dialog";
+import { useState } from "react";
 
 export default function ProductsPage() {
-    const handleExport = () => {
-        downloadCsv(products, 'products.csv');
+  const { products, deleteProduct } = useTransactions();
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+
+  const handleExport = () => {
+    downloadCsv(products, 'products.csv');
+  }
+
+  const handleEdit = (product: any) => {
+    setEditingProduct(product);
+    setOpenEditDialog(true);
+  }
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Are you sure you want to delete this product?")) {
+      await deleteProduct(id);
     }
+  }
 
   return (
     <>
       <Header title="Products">
         <div className="flex items-center gap-2">
-            <AddProductDialog>
-                <Button size="sm" className="gap-1">
-                <PlusCircle className="h-4 w-4" />
-                Add Product
-                </Button>
-            </AddProductDialog>
-            <Button size="sm" variant="outline" className="gap-1" onClick={handleExport}>
-                <Download className="h-4 w-4" />
-                Export CSV
+          <AddProductDialog>
+            <Button size="sm" className="gap-1">
+              <PlusCircle className="h-4 w-4" />
+              Add Product
             </Button>
+          </AddProductDialog>
+          <Button size="sm" variant="outline" className="gap-1" onClick={handleExport}>
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
         </div>
       </Header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
@@ -63,9 +80,7 @@ export default function ProductsPage() {
                 <TableRow>
                   <TableHead>Item Code</TableHead>
                   <TableHead>Item Name</TableHead>
-                  <TableHead className="text-right">Rate 1</TableHead>
-                  <TableHead className="text-right">Rate 2</TableHead>
-                  <TableHead className="text-right">Rate 3</TableHead>
+
                   <TableHead>
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -76,9 +91,7 @@ export default function ProductsPage() {
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.itemCode}</TableCell>
                     <TableCell>{product.name}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(product.rate1)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(product.rate2)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(product.rate3)}</TableCell>
+
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -92,8 +105,15 @@ export default function ProductsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem><Edit className="h-4 w-4 mr-2" /> Edit</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive focus:text-destructive"><Trash className="h-4 w-4 mr-2" /> Delete</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setTimeout(() => handleEdit(product), 0)}>
+                            <Edit className="h-4 w-4 mr-2" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => handleDelete(product.id)}
+                          >
+                            <Trash className="h-4 w-4 mr-2" /> Delete
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -104,6 +124,12 @@ export default function ProductsPage() {
           </CardContent>
         </Card>
       </main>
+
+      <EditProductDialog
+        product={editingProduct}
+        open={openEditDialog}
+        onOpenChange={setOpenEditDialog}
+      />
     </>
   );
 }
