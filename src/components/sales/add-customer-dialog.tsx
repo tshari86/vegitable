@@ -29,7 +29,10 @@ import { User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const customerFormSchema = z.object({
+  code: z.string().min(1, "Customer Code Required"),
   name: z.string().min(1, "Customer Name Required"),
+  contact: z.string().optional(),
+  address: z.string().optional(),
 });
 
 type CustomerFormValues = z.infer<typeof customerFormSchema>;
@@ -41,7 +44,10 @@ export function AddCustomerDialog({ children }: { children: React.ReactNode }) {
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerFormSchema),
     defaultValues: {
+      code: "",
       name: "",
+      contact: "",
+      address: "",
     },
   });
 
@@ -52,7 +58,12 @@ export function AddCustomerDialog({ children }: { children: React.ReactNode }) {
   async function onSubmit(data: CustomerFormValues) {
     setIsLoading(true);
     try {
-      await addCustomer({ name: data.name, contact: "", address: "" });
+      await addCustomer({
+        code: data.code || "",
+        name: data.name,
+        contact: data.contact || "",
+        address: data.address || ""
+      });
       setOpen(false);
       form.reset();
     } catch (error: any) {
@@ -78,6 +89,19 @@ export function AddCustomerDialog({ children }: { children: React.ReactNode }) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
+              name="code"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Customer Code</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Customer Code (Optional)" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
@@ -87,6 +111,32 @@ export function AddCustomerDialog({ children }: { children: React.ReactNode }) {
                   </FormLabel>
                   <FormControl>
                     <Input placeholder="Enter Customer name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address 1</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Address 1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="contact"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Phone Number" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

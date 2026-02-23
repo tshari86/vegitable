@@ -2,8 +2,8 @@
 "use client";
 
 import { createContext, useContext, ReactNode, useMemo } from 'react';
-import { collection, doc, addDoc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
-import type { Transaction, PaymentDetail, Supplier, Customer, DailyAccountSummary } from '@/lib/types';
+import { collection, doc, addDoc, setDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import type { Transaction, PaymentDetail, Supplier, Customer, DailyAccountSummary, Product } from '@/lib/types';
 import { useFirestore, useUser } from '@/firebase';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -29,6 +29,11 @@ interface TransactionContextType {
     updateCustomer: (customer: Customer) => void;
     dailySummaries: DailyAccountSummary[];
     saveDailySummary: (summary: DailyAccountSummary) => void;
+    products: Product[];
+    addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
+    updateProduct: (product: Product) => void;
+    deleteProduct: (id: string) => Promise<void>;
+    deleteCustomer: (id: string) => Promise<void>;
     loading: boolean;
 }
 
@@ -57,14 +62,18 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
     const dailySummariesRef = useMemo(() => firestore && user ? collection(firestore, 'dailySummaries') : null, [firestore, user]);
     const { data: dailySummariesData, loading: dailySummariesLoading } = useCollection<DailyAccountSummary>(dailySummariesRef);
 
+    const productsRef = useMemo(() => firestore && user ? collection(firestore, 'products') : null, [firestore, user]);
+    const { data: productsData, loading: productsLoading } = useCollection<Product>(productsRef);
+
     const transactions = transactionsData || [];
     const supplierPayments = supplierPaymentsData || [];
     const customerPayments = customerPaymentsData || [];
     const suppliers = suppliersData || [];
     const customers = customersData || [];
     const dailySummaries = dailySummariesData || [];
+    const products = productsData || [];
 
-    const loading = transactionsLoading || supplierPaymentsLoading || customerPaymentsLoading || suppliersLoading || customersLoading || dailySummariesLoading;
+    const loading = transactionsLoading || supplierPaymentsLoading || customerPaymentsLoading || suppliersLoading || customersLoading || dailySummariesLoading || productsLoading;
 
     const addSupplier = async (newSupplierData: Omit<Supplier, 'id'>) => {
         if (!firestore) {
@@ -84,9 +93,14 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
             return;
         }
 
+        if (newSupplierData.code && suppliers.some(s => s.code === newSupplierData.code)) {
+            toast({ title: 'Error', description: 'Supplier with this code already exists.', variant: 'destructive' });
+            return;
+        }
+
         const newSupplierRef = doc(collection(firestore, 'suppliers'));
         const newSupplierId = newSupplierRef.id;
-        const supplierWithId = { ...newSupplierData, id: newSupplierId };
+        const supplierWithId = { ...newSupplierData, id: newSupplierId, code: newSupplierData.code || '' };
 
         try {
             await setDoc(newSupplierRef, supplierWithId);
@@ -133,6 +147,11 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
             return;
         }
 
+        if (newCustomerData.code && customers.some(c => c.code === newCustomerData.code)) {
+            toast({ title: 'Error', description: 'Customer with this code already exists.', variant: 'destructive' });
+            return;
+        }
+
         const newCustomerRef = doc(collection(firestore, 'customers'));
         const newCustomerId = newCustomerRef.id;
         const customerWithId = { ...newCustomerData, id: newCustomerId };
@@ -172,9 +191,15 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
 
         const batch = writeBatch(firestore);
 
+        // Calculate next bill number
+        const maxBillNumber = transactions.reduce((max, t) => {
+            return (t.billNumber || 0) > max ? (t.billNumber || 0) : max;
+        }, 0);
+        const nextBillNumber = maxBillNumber + 1;
+
         newTransactions.forEach(t => {
             const transRef = doc(collection(firestore, 'transactions'));
-            batch.set(transRef, t);
+            batch.set(transRef, { ...t, billNumber: nextBillNumber });
         });
 
         const totalAmount = newTransactions.reduce((sum, t) => sum + t.amount, 0);
@@ -282,15 +307,31 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         });
     }
 
-    const updateSupplier = (updatedSupplier: Supplier) => {
+    const updateSupplier = async (updatedSupplier: Supplier) => {
         if (!firestore) return;
+
+        // Check for duplicate code if code is changed
+        if (updatedSupplier.code) {
+            const existingCodeSupplier = suppliers.find(s => s.code === updatedSupplier.code && s.id !== updatedSupplier.id);
+            if (existingCodeSupplier) {
+                toast({ title: 'Error', description: 'Supplier with this code already exists.', variant: 'destructive' });
+                return;
+            }
+        }
+
         const supplierRef = doc(firestore, 'suppliers', updatedSupplier.id);
-        updateDoc(supplierRef, updatedSupplier as any).catch(e => {
+        try {
+            await updateDoc(supplierRef, updatedSupplier as any);
+            toast({ title: 'Success', description: 'Supplier updated successfully.' });
+        } catch (e) {
+            console.error("Error updating supplier:", e);
+            toast({ title: 'Error', description: 'Failed to update supplier.', variant: 'destructive' });
             const permissionError = new FirestorePermissionError({ path: supplierRef.path, operation: 'update', requestResourceData: updatedSupplier });
             errorEmitter.emit('permission-error', permissionError);
-        });
+        }
+
         const paymentRef = doc(firestore, 'supplierPayments', updatedSupplier.id);
-        updateDoc(paymentRef, { partyName: updatedSupplier.name }).catch(e => {
+        updateDoc(paymentRef, { partyName: updatedSupplier.name, code: updatedSupplier.code || '' }).catch(e => {
             const permissionError = new FirestorePermissionError({ path: paymentRef.path, operation: 'update', requestResourceData: { partyName: updatedSupplier.name } });
             errorEmitter.emit('permission-error', permissionError);
         });
@@ -310,6 +351,23 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         });
     }
 
+    const deleteCustomer = async (customerId: string) => {
+        if (!firestore) return;
+        const customerRef = doc(firestore, 'customers', customerId);
+        const paymentRef = doc(firestore, 'customerPayments', customerId);
+
+        try {
+            await deleteDoc(customerRef);
+            await deleteDoc(paymentRef);
+            toast({ title: 'Success', description: 'Customer deleted successfully.' });
+        } catch (e: any) {
+            console.error("Error deleting customer:", e);
+            const permissionError = new FirestorePermissionError({ path: customerRef.path, operation: 'delete' });
+            errorEmitter.emit('permission-error', permissionError);
+            throw e;
+        }
+    }
+
     const saveDailySummary = (summary: DailyAccountSummary) => {
         if (!firestore) return;
         const summaryRef = doc(firestore, "dailySummaries", summary.date);
@@ -319,7 +377,58 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         });
     };
 
-    const value: TransactionContextType = { transactions, addTransaction, supplierPayments, customerPayments, updateSupplierPayment, updateCustomerPayment, suppliers, addSupplier, updateSupplier, customers, addCustomer, updateCustomer, dailySummaries, saveDailySummary, loading };
+    const addProduct = async (newProductData: Omit<Product, 'id'>) => {
+        if (!firestore) {
+            const error = new Error("Firestore not initialized");
+            console.error(error);
+            throw error;
+        }
+
+        if (!user) {
+            const error = new Error("User not authenticated");
+            console.error(error);
+            throw error;
+        }
+
+        const newProductRef = doc(collection(firestore, 'products'));
+        const newProductId = newProductRef.id;
+        const productWithId = { ...newProductData, id: newProductId };
+
+        try {
+            await setDoc(newProductRef, productWithId);
+            toast({ title: 'Success', description: 'Product added successfully.' });
+        } catch (e: any) {
+            console.error("Error adding product:", e);
+            const permissionError = new FirestorePermissionError({ path: newProductRef.path, operation: 'create', requestResourceData: newProductData });
+            errorEmitter.emit('permission-error', permissionError);
+            throw e;
+        }
+    }
+
+    const updateProduct = (updatedProduct: Product) => {
+        if (!firestore) return;
+        const productRef = doc(firestore, 'products', updatedProduct.id);
+        updateDoc(productRef, updatedProduct as any).catch(e => {
+            const permissionError = new FirestorePermissionError({ path: productRef.path, operation: 'update', requestResourceData: updatedProduct });
+            errorEmitter.emit('permission-error', permissionError);
+        });
+    }
+
+    const deleteProduct = async (productId: string) => {
+        if (!firestore) return;
+        const productRef = doc(firestore, 'products', productId);
+        try {
+            await deleteDoc(productRef);
+            toast({ title: 'Success', description: 'Product deleted successfully.' });
+        } catch (e: any) {
+            console.error("Error deleting product:", e);
+            const permissionError = new FirestorePermissionError({ path: productRef.path, operation: 'delete' });
+            errorEmitter.emit('permission-error', permissionError);
+            throw e;
+        }
+    }
+
+    const value: TransactionContextType = { transactions, addTransaction, supplierPayments, customerPayments, updateSupplierPayment, updateCustomerPayment, suppliers, addSupplier, updateSupplier, customers, addCustomer, updateCustomer, deleteCustomer, dailySummaries, saveDailySummary, products, addProduct, updateProduct, deleteProduct, loading };
 
     return (
         <TransactionContext.Provider value={value}>

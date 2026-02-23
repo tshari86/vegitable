@@ -28,6 +28,9 @@ import { Trash } from "lucide-react";
 
 const supplierFormSchema = z.object({
   name: z.string().min(1, "Supplier name is required"),
+  code: z.string().optional(),
+  contact: z.string().optional(),
+  address: z.string().optional(),
   amount: z.coerce.number(),
 });
 
@@ -47,42 +50,56 @@ export function EditSupplierDialog({
   onSave,
 }: EditSupplierDialogProps) {
   const { suppliers } = useTransactions();
+  const currentSupplier = payment ? suppliers.find(s => s.id === payment.partyId) : null;
 
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(supplierFormSchema),
     defaultValues: {
       name: "",
+      code: "",
+      contact: "",
+      address: "",
       amount: 0,
     },
   });
 
   useEffect(() => {
     if (payment) {
+      const supplier = suppliers.find(s => s.id === payment.partyId);
       form.reset({
         name: payment.partyName,
+        code: supplier?.code || "",
+        contact: supplier?.contact || "",
+        address: supplier?.address || "",
         amount: payment.dueAmount,
       });
     }
-  }, [payment, form]);
+  }, [payment, form, suppliers]);
 
   function onSubmit(data: SupplierFormValues) {
     if (payment) {
-        const supplier = suppliers.find(s => s.id === payment.partyId);
-        if (!supplier) return;
+      const supplier = suppliers.find(s => s.id === payment.partyId);
+      if (!supplier) return;
 
-        const updatedSupplier: Supplier = { ...supplier, name: data.name };
-        
-        const dueAmountChange = payment.dueAmount - data.amount;
-        const newPaidAmount = payment.paidAmount + dueAmountChange;
-        
-        const updatedPayment: PaymentDetail = {
-            ...payment,
-            partyName: data.name,
-            paidAmount: newPaidAmount,
-            dueAmount: payment.totalAmount - newPaidAmount,
-        };
+      const updatedSupplier: Supplier = {
+        ...supplier,
+        name: data.name,
+        code: data.code || "",
+        contact: data.contact || "",
+        address: data.address || ""
+      };
 
-        onSave(updatedSupplier, updatedPayment);
+      const dueAmountChange = payment.dueAmount - data.amount;
+      const newPaidAmount = payment.paidAmount + dueAmountChange;
+
+      const updatedPayment: PaymentDetail = {
+        ...payment,
+        partyName: data.name,
+        paidAmount: newPaidAmount,
+        dueAmount: payment.totalAmount - newPaidAmount,
+      };
+
+      onSave(updatedSupplier, updatedPayment);
     }
     onOpenChange(false);
   }
@@ -97,12 +114,51 @@ export function EditSupplierDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
+              name="code"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Code</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Supplier Code" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Supplier</FormLabel>
                   <FormControl>
                     <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="contact"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter phone number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter address" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -122,15 +178,15 @@ export function EditSupplierDialog({
               )}
             />
             <DialogFooter className="justify-between pt-4">
-                <Button type="button" variant="destructive" size="icon">
-                    <Trash className="h-4 w-4" />
+              <Button type="button" variant="destructive" size="icon">
+                <Trash className="h-4 w-4" />
+              </Button>
+              <div className="flex gap-2">
+                <Button type="submit" size="icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </Button>
-                <div className="flex gap-2">
-                    <Button type="submit" size="icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </Button>
-                    <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Close</Button>
-                </div>
+                <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Close</Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>

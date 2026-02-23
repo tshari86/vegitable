@@ -30,6 +30,9 @@ import { useToast } from "@/hooks/use-toast";
 
 const supplierFormSchema = z.object({
   name: z.string().min(1, "Supplier Name Required"),
+  code: z.string().optional(),
+  contact: z.string().optional(),
+  address: z.string().optional(),
 });
 
 type SupplierFormValues = z.infer<typeof supplierFormSchema>;
@@ -42,6 +45,9 @@ export function AddSupplierDialog({ children }: { children: React.ReactNode }) {
     resolver: zodResolver(supplierFormSchema),
     defaultValues: {
       name: "",
+      code: "",
+      contact: "",
+      address: "",
     },
   });
 
@@ -53,7 +59,12 @@ export function AddSupplierDialog({ children }: { children: React.ReactNode }) {
     console.log("Submitting supplier form", data);
     setIsLoading(true);
     try {
-      await addSupplier({ name: data.name, contact: "", address: "" });
+      await addSupplier({
+        name: data.name,
+        code: data.code || "",
+        contact: data.contact || "",
+        address: data.address || ""
+      });
       setOpen(false);
       form.reset();
     } catch (error: any) {
@@ -79,6 +90,19 @@ export function AddSupplierDialog({ children }: { children: React.ReactNode }) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
+              name="code"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Code</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Supplier Code" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
@@ -88,6 +112,32 @@ export function AddSupplierDialog({ children }: { children: React.ReactNode }) {
                   </FormLabel>
                   <FormControl>
                     <Input placeholder="Enter Supplier name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="contact"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter phone number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter address" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

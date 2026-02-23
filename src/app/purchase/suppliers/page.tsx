@@ -29,7 +29,7 @@ import { AddSupplierDialog } from "@/components/purchase/add-supplier-dialog";
 import { EditSupplierDialog } from "@/components/purchase/edit-supplier-dialog";
 
 export default function PurchaseSuppliersPage() {
-  const { supplierPayments, updateSupplier, updateSupplierPayment } = useTransactions();
+  const { supplierPayments, updateSupplier, updateSupplierPayment, suppliers } = useTransactions();
   const [searchTerm, setSearchTerm] = useState("");
   const [editingSupplier, setEditingSupplier] = useState<PaymentDetail | null>(null);
 
@@ -47,18 +47,18 @@ export default function PurchaseSuppliersPage() {
     <>
       <Header title="Payment Dues">
         <div className="flex items-center gap-2">
-            <Input 
-                placeholder="Supplier Name"
-                className="w-48"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <AddSupplierDialog>
-              <Button size="sm" className="gap-1">
-                  <Plus className="h-4 w-4" />
-                  New
-              </Button>
-            </AddSupplierDialog>
+          <Input
+            placeholder="Supplier Name"
+            className="w-48"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <AddSupplierDialog>
+            <Button size="sm" className="gap-1">
+              <Plus className="h-4 w-4" />
+              New
+            </Button>
+          </AddSupplierDialog>
         </div>
       </Header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
@@ -73,6 +73,7 @@ export default function PurchaseSuppliersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[100px]">Code</TableHead>
                   <TableHead>
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4" /> Supplier
@@ -85,7 +86,7 @@ export default function PurchaseSuppliersPage() {
                   </TableHead>
                   <TableHead className="text-center">
                     <div className="flex items-center gap-2 justify-center">
-                        <BookOpen className="h-4 w-4" /> Ledger
+                      <BookOpen className="h-4 w-4" /> Ledger
                     </div>
                   </TableHead>
                 </TableRow>
@@ -93,23 +94,28 @@ export default function PurchaseSuppliersPage() {
               <TableBody>
                 {filteredSuppliers.map((supplier: PaymentDetail) => (
                   <TableRow key={supplier.id}>
+                    <TableCell className="font-mono">
+                      {suppliers.find(s => s.id === supplier.partyId)?.code || '-'}
+                    </TableCell>
                     <TableCell>
-                        <div className="flex items-center gap-1">
-                            <span>{supplier.partyName}</span>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:bg-transparent" onClick={() => setEditingSupplier(supplier)}>
-                                <Pencil className="h-3 w-3"/>
-                            </Button>
-                        </div>
+                      <div className="flex items-center gap-1">
+                        <span>
+                          {supplier.partyName}
+                        </span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:bg-transparent" onClick={() => setEditingSupplier(supplier)}>
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(supplier.dueAmount)}
                     </TableCell>
                     <TableCell className="text-center">
-                        <Link href={`/purchase/suppliers/${supplier.partyId}`}>
-                            <Button variant="outline" size="sm">
-                                View
-                            </Button>
-                        </Link>
+                      <Link href={`/purchase/suppliers/${supplier.partyId}`}>
+                        <Button variant="outline" size="sm">
+                          View
+                        </Button>
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))}
